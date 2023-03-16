@@ -20,7 +20,7 @@ import math
 import itertools
 import os, sys
 import pylab as plt
-import exp_configs_fullbatch
+# import exp_configs_fullbatch
 import time
 import numpy as np
 import shutil
@@ -42,9 +42,9 @@ def trainval(exp_dict, savedir_base, reset=False):
 	savedir = os.path.join(savedir_base, exp_id)
 
 	if reset:
-	    # delete and backup experiment
-	    hc.delete_experiment(savedir, backup_flag=True)
-
+		# delete and backup experiment
+		hc.delete_experiment(savedir, backup_flag=True)
+	
 	# create folder and save the experiment dictionary
 	os.makedirs(savedir, exist_ok=True)
 	hu.save_json(os.path.join(savedir, 'exp_dict.json'), exp_dict)
@@ -83,10 +83,10 @@ def trainval(exp_dict, savedir_base, reset=False):
 	
     # load the dataset
 	if exp_dict["dataset"] == "synthetic":
-	    n, d = exp_dict["n_samples"], exp_dict["d"]
-	    false_ratio = exp_dict["false_ratio"]	   
-	    margin = exp_dict["margin"]	    
-	    X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"],n, d, margin,
+		n, d = exp_dict["n_samples"], exp_dict["d"]
+		false_ratio = exp_dict["false_ratio"]	   
+		margin = exp_dict["margin"]	    
+		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"],n, d, margin,
 										 false_ratio, standardize=standardize, remove_strong_convexity=remove_strong_convexity)
 
 	elif exp_dict["dataset"] == "synthetic_ls" or exp_dict["dataset"] == "synthetic_reg":
