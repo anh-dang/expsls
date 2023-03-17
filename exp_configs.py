@@ -144,6 +144,13 @@ RUNS=[0,1,2,3,4]
 
 pis = [1]
 
+# SHB
+for alphat in ['EXP','DECR','CNST']:
+    opt_list += [{'name': 'EXP_SHB',
+                'alpha_t': alphat,
+                'is_sls': False,
+                }]
+
 # SGD
 for alphat in ["DECR"]:
     for sls in [False, True]:
@@ -157,39 +164,39 @@ opt_list += [{'name': 'EXP_SGD',
                       'is_sls': False,
                       }]
 #
-# # MASG
-opt_list += [{'name': 'M_ASG',
-              'p': 1,
-              'c': 10
-              }]
+# # # MASG
+# opt_list += [{'name': 'M_ASG',
+#               'p': 1,
+#               'c': 10
+#               }]
 
 # #ASGD
 rhos=[100]
 # rho = 1
 
-for rho in rhos:
-    for alphat in [ "DECR"]:
-        for sls in [False, True]:
-            opt_list += [{'name': 'EXP_ACC_SGD',
-                          'alpha_t': alphat,
-                          'rho': rho,
-                          'is_sls': sls
-                          }]
+# for rho in rhos:
+#     for alphat in [ "DECR"]:
+#         for sls in [False, True]:
+#             opt_list += [{'name': 'EXP_ACC_SGD',
+#                           'alpha_t': alphat,
+#                           'rho': rho,
+#                           'is_sls': sls
+#                           }]
 
-    opt_list += [{'name': 'EXP_ACC_SGD',
-                          'alpha_t': "CNST",
-                          'rho': rho,
-                          'is_sls': False
-                          }]
+#     opt_list += [{'name': 'EXP_ACC_SGD',
+#                           'alpha_t': "CNST",
+#                           'rho': rho,
+#                           'is_sls': False
+#                           }]
 
 
-# # #RIT
-rho=10
-# rho = 1
-opt_list += [{'name': 'RIT_SGD',
-              'rho': rho
-              }]
-# #
+# # # #RIT
+# rho=10
+# # rho = 1
+# opt_list += [{'name': 'RIT_SGD',
+#               'rho': rho
+#               }]
+# # #
 
 
 for benchmark in benchmarks_list:

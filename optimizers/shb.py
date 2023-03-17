@@ -111,7 +111,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
             a_k = lr/(1 + ldn)
             b_k = ((1 - lr * mu)/(1 + ldn)) * ld
             temp = x.copy()
-            x -= a_k * gk - b_k(x - x_prev)
+            x -= a_k * gk - b_k * (x - x_prev)
             x_prev = temp
             num_grad_evals = num_grad_evals + batch_size
 

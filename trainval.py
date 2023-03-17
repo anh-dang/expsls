@@ -8,6 +8,7 @@ from optimizers.exp_step_sgd import *
 from optimizers.exp_step_acc_sgd import *
 from optimizers.rit_sgd import *
 from optimizers.masg import *
+from optimizers.shb import *
 
 
 import argparse
@@ -158,7 +159,24 @@ def trainval(exp_dict, savedir_base, reset=False):
 
 	print('Starting experiment at epoch %d' % (s_epoch))
 
-	if opt_dict["name"] == "EXP_SGD":
+	# score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+	# 					 max_epoch=exp_dict["max_epoch"],
+	# 					 D=X, labels=y,
+	# 					 L=Lmax, mu=Lmin,
+	# 					 is_sls=opt_dict['is_sls'],
+	# 					 alpha_t=opt_dict['alpha_t'],
+	# 					 D_test=X_test, labels_test=y_test)
+
+	if opt_dict["name"] == "EXP_SHB":
+		score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 L=Lmax, mu=Lmin,
+						 is_sls=opt_dict['is_sls'],
+						 alpha_t=opt_dict['alpha_t'],
+						 D_test=X_test, labels_test=y_test)
+
+	elif opt_dict["name"] == "EXP_SGD":
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 gamma=1./Lmax,
@@ -203,6 +221,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 
 
 	else:
+		print(opt_dict["name"])
 		print('Method does not exist')
 		return 1/0
     
@@ -251,7 +270,7 @@ if __name__ == '__main__':
         # run experiments
         for exp_dict in exp_list:
             # do trainval
-
+            # print(exp_dict)
             trainval(exp_dict=exp_dict,
                     savedir_base=args.savedir_base,
                     reset=args.reset)
