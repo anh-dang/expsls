@@ -30,7 +30,7 @@ from haven import haven_utils as hu
 from haven import haven_chk as hc
 from haven import haven_jobs as hj
 
-
+VERBOSE = False
 Lparam={}
 def trainval(exp_dict, savedir_base, reset=False):
 
@@ -110,8 +110,9 @@ def trainval(exp_dict, savedir_base, reset=False):
 										 remove_strong_convexity=remove_strong_convexity)
 		n = X.shape[0]
 
-	if exp_dict["batch_size"]==-1:
-		exp_dict["batch_size"]=n
+	if exp_dict["batch_size"]<0:
+		exp_dict["batch_size"]=int(n/(-exp_dict["batch_size"]))
+
 	rb=int(exp_dict["batch_size"]/n)
 	if (exp_dict["dataset"],rb) in Lparam.keys():
 		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb)]
@@ -170,11 +171,11 @@ def trainval(exp_dict, savedir_base, reset=False):
 	if opt_dict["name"] == "EXP_SHB":
 		score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
-						 D=X, labels=y,
+						 D=X, labels=y, method=opt_dict['method'],
 						 L=Lmax, mu=Lmin,
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 
 	elif opt_dict["name"] == "EXP_SGD":
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
@@ -183,7 +184,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 D=X, labels=y,
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 
 
 	elif opt_dict["name"] == "EXP_ACC_SGD":
@@ -195,7 +196,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 rho=opt_dict["rho"],
 						 mu=Lmin,
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 	# M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 	# 	  x0=None, mu=0.1, L=0.1, p=1, verbose=True, D_test=None, labels_test=None, log_idx=1000)
 	elif opt_dict["name"] == "M_ASG":

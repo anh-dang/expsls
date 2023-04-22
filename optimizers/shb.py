@@ -10,7 +10,7 @@ from optimizers.sls import SLS as SLS
 
 
 def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
-         x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000):
+         method=None, x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000):
     """
         SGD with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
@@ -31,7 +31,16 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     if alpha_t=="EXP":
          alpha=(1./T)**(1./T)
 
-    gamma = 1./(2*L)
+    if method=='POLYAK':
+        gamma = 4/((np.sqrt(L) + np.sqrt(mu))**2)
+    elif method=='GHADIMI':
+        gamma = 2./L
+    elif method=='WANG21':
+        gamma = 1./L
+    elif method=='WANG22':
+        gamma = 1./L
+    else:
+        gamma = 1./(2*L)
     if is_sls:
         gamma=2
 
@@ -108,8 +117,21 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
             ld = ldn
             ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**(t+1))
              
-            a_k = lr/(1 + ldn)
-            b_k = ((1 - lr * mu)/(1 + ldn)) * ld
+            if method=='POLYAK':
+                a_k = lr
+                b_k = (np.sqrt(L) - np.sqrt(mu))/(np.sqrt(L) + np.sqrt(mu))
+            elif method=='GHADIMI':
+                a_k = lr
+                b_k = mu/L
+            elif method=='WANG21':
+                a_k = lr
+                b_k = (1 - 1/(2*np.sqrt(L/mu)))**2
+            elif method=='WANG22':
+                a_k = lr
+                b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+            else:
+                a_k = lr/(1 + ldn)
+                b_k = ((1 - lr * mu)/(1 + ldn)) * ld
             temp = x.copy()
             x -= a_k * gk - b_k * (x - x_prev)
             x_prev = temp
