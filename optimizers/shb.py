@@ -12,7 +12,7 @@ from optimizers.sls import SLS as SLS
 def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
          method=None, x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000):
     """
-        SGD with fixed step size for solving finite-sum problems
+        SHB with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
         batch_size: the size of minibatches to use.
         D: the set of input vectors (usually X).
@@ -43,6 +43,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         gamma = 1./(2*L)
     if is_sls:
         gamma=2
+        L = 1./(2. * gamma)
 
     if x0 is None:
         x = np.zeros(d)
@@ -78,12 +79,34 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         test_loss = closure(x, D_test, labels_test, backwards=False)
         score_dict["test_loss"] = test_loss
         score_dict["test_accuracy"] = accuracy(x, D_test, labels_test)
-    score_list += [score_dict]
+    
 
     t=0
     eta = gamma*alpha
     lrn = gamma*alpha
+    lr = lrn
     ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**t)
+    ld = ldn
+        
+    if method=='POLYAK':
+        a_k = lr
+        b_k = (np.sqrt(L) - np.sqrt(mu))/(np.sqrt(L) + np.sqrt(mu))
+    elif method=='GHADIMI':
+        a_k = lr
+        b_k = mu/L
+    elif method=='WANG21':
+        a_k = lr
+        b_k = (1 - 1/(2*np.sqrt(L/mu)))**2
+    elif method=='WANG22':
+        a_k = lr
+        b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+    else:
+        a_k = lr/(1 + ldn)
+        b_k = ((1 - lr * mu)/(1 + ldn)) * ld
+
+    score_dict["alpha_k"] = a_k
+    score_dict["beta_k"] = b_k
+    score_list += [score_dict]
 
     for k in range(max_epoch):        
         t_start = time.time()
@@ -138,7 +161,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
             num_grad_evals = num_grad_evals + batch_size
 
             if is_sls:
-                gamma,fv=SLS(x+lr*gk,gk,Di,labels_i,gamma,closure)
+                gamma,fv=SLS(x,gk,Di,labels_i,gamma,closure,(x_prev,mu,ld,lr,eta,T))
                 num_func_evals+=fv
                 # num_grad_evals = num_grad_evals + batch_size
                 # lr=lr*alpha**(t+1)
@@ -169,6 +192,8 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                 score_dict["train_loss"] = loss
                 score_dict["grad_norm"] = np.linalg.norm(full_grad)
                 score_dict["train_accuracy"] = accuracy(x, D, labels)
+                score_dict["alpha_k"] = a_k
+                score_dict["beta_k"] = b_k
                 if D_test is not None:
                     test_loss = closure(x, D_test, labels_test, backwards=False)
                     score_dict["test_loss"] = test_loss

@@ -127,6 +127,9 @@ def trainval(exp_dict, savedir_base, reset=False):
 			# 		Lmax,Lmin=max(Lmax,Lmaxt),min(Lmin,Lmint)
 			# else :
 				Lmax, Lmin = param_l(X)
+		# if float(args.mu_misspec) > 1:
+		# 	Lmin = float(args.mu_misspec)*Lmin
+
 		Lparam[(exp_dict["dataset"],rb)]=(Lmax,Lmin)
 
 	#set 1/n as reg factor for all exp
@@ -172,7 +175,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 		score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 D=X, labels=y, method=opt_dict['method'],
-						 L=Lmax, mu=Lmin,
+						 L=Lmax, mu=Lmin*opt_dict['mis_spec'],
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
 						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
@@ -239,6 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('-ei', '--exp_id', default=None)
     parser.add_argument('-v', '--view_jupyter', default=None)
     parser.add_argument('-j', '--run_jobs', default=None)
+    parser.add_argument('-m', '--mu_misspec', default=1, type=int)
 
     args = parser.parse_args()
 
