@@ -42,7 +42,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     else:
         gamma = 1./(2*L)
     if is_sls:
-        gamma=2
+        gamma=1
         L = 1./(2. * gamma)
 
     if x0 is None:
