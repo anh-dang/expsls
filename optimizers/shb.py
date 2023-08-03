@@ -39,8 +39,11 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         gamma = 1./L
     elif method=='WANG22':
         gamma = 1./L
+    elif method=='ADA':
+        gamma = 1
     else:
         gamma = 1./(2*L)
+    
     if is_sls:
         gamma=1
         L = 1./(2. * gamma)
@@ -85,8 +88,12 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     eta = gamma*alpha
     lrn = gamma*alpha
     lr = lrn
-    ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**t)
+    if method=='ADA':
+        ldn = 1
+    else:
+        ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**t)
     ld = ldn
+    grad_sum = 0
         
     if method=='POLYAK':
         a_k = lr
@@ -100,6 +107,9 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     elif method=='WANG22':
         a_k = lr
         b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+    elif method=='ADA':
+        a_k = lr/(1 + ldn)
+        b_k = ld/(1 + ldn)
     else:
         a_k = lr/(1 + ldn)
         b_k = ((1 - lr * mu)/(1 + ldn)) * ld
@@ -130,15 +140,21 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
 
             # compute the loss, gradients
             loss, gk = closure(x, Di, labels_i)
-
-            lr = lrn
-            if alpha_t=="DECR":
-                lrn=gamma*(1./(t+1))
-            else:
-                lrn=gamma*(alpha**(t+1))
             
-            ld = ldn
-            ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**(t+1))
+            if method == 'ADA':
+                lr = eta/np.sqrt(grad_sum) if grad_sum != 0 else eta
+                grad_sum += np.linalg.norm(gk)
+            else:
+                lr = lrn
+                if alpha_t=="DECR":
+                    lrn=gamma*(1./(t+1))
+                else:
+                    lrn=gamma*(alpha**(t+1))
+            
+            
+            if method != 'ADA':
+                ld = ldn
+                ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**(t+1))
              
             if method=='POLYAK':
                 a_k = lr
@@ -152,6 +168,9 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
             elif method=='WANG22':
                 a_k = lr
                 b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+            elif method=='ADA':
+                a_k = lr/(1 + ldn)
+                b_k = ld/(1 + ldn)
             else:
                 a_k = lr/(1 + ldn)
                 b_k = ((1 - lr * mu)/(1 + ldn)) * ld

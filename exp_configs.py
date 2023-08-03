@@ -136,9 +136,9 @@ for benchmark in benchmarks_list:
 
 opt_list = []
 # MAX_EPOCH=20000
-MAX_EPOCH = 10000
+MAX_EPOCH = 100
 
-# RUNS = [0]
+RUNS = [0]
 RUNS=[0,1,2,3,4]
 
 
@@ -161,7 +161,14 @@ pis = [1]
 
 opt_list += [{'name': 'EXP_SHB',
             'alpha_t': 'CNST',
-            'method': 'WANG22',
+            'method': 'ADA',
+            'is_sls': False,
+            'mis_spec': 1
+            }]
+
+opt_list += [{'name': 'EXP_SHB',
+            'alpha_t': 'CNST',
+            'method': 'SEBBOUH',
             'is_sls': False,
             'mis_spec': 1
             }]
@@ -178,7 +185,12 @@ opt_list += [{'name': 'EXP_SHB',
 opt_list += [{'name': 'EXP_SGD',
                       'alpha_t': "CNST",
                       'is_sls': False,
-                      }]
+                      'is_ADA': False}]
+
+opt_list += [{'name': 'EXP_SGD',
+                      'alpha_t': "CNST",
+                      'is_sls': False,
+                      'is_ADA': True}]
 
 # # # MASG
 # opt_list += [{'name': 'M_ASG',
@@ -217,8 +229,8 @@ rhos=[100]
 
 for benchmark in benchmarks_list:
     EXP_GROUPS['exp_%s' % benchmark] += hu.cartesian_exp_group(get_benchmark(benchmark, opt_list,
-                                                                             batch_size=[-1, -2, -4./3], max_epoch=[MAX_EPOCH],
+                                                                             batch_size=[100], max_epoch=[MAX_EPOCH],
                                                                              runs=RUNS,
-                                                                            #  losses=['squared_loss', 'logistic_loss'],
-                                                                             losses=['squared_loss']))
+                                                                             losses=['squared_loss', 'logistic_loss']))
+                                                                            #  losses=['squared_loss']))
 # losses=['squared_loss', 'logistic_loss']
