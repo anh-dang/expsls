@@ -199,7 +199,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 rho=opt_dict["rho"],
 						 mu=Lmin,
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
+						 is_ADA=opt_dict['is_ADA'])
 	# M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 	# 	  x0=None, mu=0.1, L=0.1, p=1, verbose=True, D_test=None, labels_test=None, log_idx=1000)
 	elif opt_dict["name"] == "M_ASG":
