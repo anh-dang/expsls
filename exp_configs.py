@@ -138,7 +138,7 @@ opt_list = []
 # MAX_EPOCH=20000
 MAX_EPOCH = 100
 
-RUNS = [0]
+# RUNS = [0]
 RUNS=[0,1,2,3,4]
 
 
