@@ -158,13 +158,16 @@ pis = [1]
 #                             'mis_spec': misspec
 #                             }]
                 
-
-opt_list += [{'name': 'EXP_SHB',
-            'alpha_t': 'CNST',
-            'method': 'ADA',
-            'is_sls': False,
-            'mis_spec': 1
-            }]
+for ada in [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]:
+    for ld in [0.1, 0.5, 1]:
+        opt_list += [{'name': 'EXP_SHB',
+                    'alpha_t': 'CNST',
+                    'method': 'ADA',
+                    'is_sls': False,
+                    'mis_spec': 1,
+                    'ada': ada,
+                    'ld': ld
+                    }]
 
 opt_list += [{'name': 'EXP_SHB',
             'alpha_t': 'CNST',
@@ -182,15 +185,16 @@ opt_list += [{'name': 'EXP_SHB',
 #                       'is_sls': sls,
 #                       }]
 
-opt_list += [{'name': 'EXP_SGD',
-                      'alpha_t': "CNST",
-                      'is_sls': False,
-                      'is_ADA': False}]
+# opt_list += [{'name': 'EXP_SGD',
+#                       'alpha_t': "CNST",
+#                       'is_sls': False,
+#                       'is_ADA': None}]
 
-opt_list += [{'name': 'EXP_SGD',
-                      'alpha_t': "CNST",
-                      'is_sls': False,
-                      'is_ADA': True}]
+for ada in [None, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5]:
+    opt_list += [{'name': 'EXP_SGD',
+                        'alpha_t': "CNST",
+                        'is_sls': False,
+                        'ada': ada}]
 
 # # # MASG
 # opt_list += [{'name': 'M_ASG',

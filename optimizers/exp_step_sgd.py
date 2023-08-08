@@ -10,7 +10,7 @@ from optimizers.sls import SLS as SLS
 
 
 def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
-         x0=None, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, is_ADA=False):
+         x0=None, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None):
     """
         SGD with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
@@ -34,8 +34,8 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     if is_sls:
         gamma=2
     
-    if is_ADA:
-        gamma=1
+    if ada:
+        gamma=ada
 
     if x0 is None:
         x = np.zeros(d)
@@ -97,7 +97,7 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
             # compute the loss, gradients
             loss, gk = closure(x, Di, labels_i)
 
-            if is_ADA:
+            if ada:
                 lr = (gamma*(alpha**t))/np.sqrt(grad_sum) if grad_sum != 0 else gamma*(alpha**t)
                 grad_sum += np.linalg.norm(gk)
             else:

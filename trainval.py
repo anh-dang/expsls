@@ -178,7 +178,9 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 L=Lmax, mu=Lmin*opt_dict['mis_spec'],
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
+						 ada=opt_dict['ada'],
+						 ld=opt_dict['ld'])
 
 	elif opt_dict["name"] == "EXP_SGD":
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
@@ -187,7 +189,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 D=X, labels=y,
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
+						 ada=opt_dict['ada'])
 
 
 	elif opt_dict["name"] == "EXP_ACC_SGD":
@@ -280,6 +283,7 @@ if __name__ == '__main__':
             trainval(exp_dict=exp_dict,
                     savedir_base=args.savedir_base,
                     reset=args.reset)
+    print('Finished!')
 
 
 # exp_mushrooms exp_ijcnn exp_rcv1

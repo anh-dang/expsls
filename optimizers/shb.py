@@ -10,7 +10,7 @@ from optimizers.sls import SLS as SLS
 
 
 def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
-         method=None, x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000):
+         method=None, x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None, ld=None):
     """
         SHB with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
@@ -40,7 +40,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     elif method=='WANG22':
         gamma = 1./L
     elif method=='ADA':
-        gamma = 1
+        gamma = ada
     else:
         gamma = 1./(2*L)
     
@@ -89,7 +89,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     lrn = gamma*alpha
     lr = lrn
     if method=='ADA':
-        ldn = 1
+        ldn = ld
     else:
         ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**t)
     ld = ldn
