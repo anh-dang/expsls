@@ -173,7 +173,9 @@ opt_list += [{'name': 'EXP_SHB',
             'alpha_t': 'CNST',
             'method': 'SEBBOUH',
             'is_sls': False,
-            'mis_spec': 1
+            'mis_spec': 1,
+            'ada': None,
+            'ld': None
             }]
 
 # SGD
