@@ -1,5 +1,4 @@
-# Towards Noise-adaptive, Problem-adaptive Stochastic Gradient Descent
-https://arxiv.org/abs/2110.11442
+# Noise adaptive (accelerated) Stochastic Heavy-Ball Momentum
 ## Experiments
 
 Run the experiments using the command below:
@@ -14,7 +13,7 @@ with the placeholders defined as follows.
 
 Defines the dataset and regularization constant for the experiments
 
-- `mushrooms`, `ijcnn`, `rcv1` 
+- `mushrooms`, `ijcnn`, `rcv1` ,`synthetic_kappa`
 
 **{SAVEDIR_BASE}**
 

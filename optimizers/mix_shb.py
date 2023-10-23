@@ -10,7 +10,7 @@ from optimizers.sls import SLS as SLS
 def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None,
     x0=None, mu=1,L=1, is_sls=False, c=0.5, verbose=False, D_test=None, labels_test=None, log_idx=1000):
     """
-        SHB with fixed step size for solving finite-sum problems
+        Mix-SHB for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
         batch_size: the size of minibatches to use.
         D: the set of input vectors (usually X).
@@ -70,13 +70,13 @@ def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     t=0
 
     #For stage 1
-    eta_0 = 1./L
+    eta_0 = 1./(2*L)
     a_k = eta_0
     b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
     
     #For stage 2
-    # alpha=(2*(L/mu)/T1)**(1./T1)
-    alpha=(1/T1)**(1./T1)
+    alpha=(3*(L/mu)/T1)**(1./T1)
+    # alpha=(1/T1)**(1./T1)
     gamma = 1./(2*L)
     # gamma = 1e-3
     eta = gamma*alpha

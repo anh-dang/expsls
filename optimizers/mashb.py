@@ -37,7 +37,7 @@ def ls_stages(kap, T):
 def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
             x0=None, mu=0.1,L=0.1,p=1,c=10, verbose=True, D_test=None, labels_test=None,log_idx=1000):
     """
-        SGD with fixed step size for solving finite-sum problems
+        Multi-stage SHB for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
         batch_size: the size of minibatches to use.
         D: the set of input vectors (usually X).
@@ -69,7 +69,7 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     def a(k):
         # if k ==0 : return  1./L
         # return 1. / (2 ** (k+1) * L)
-        return 1./((2.0**(k))*L)
+        return 0.5/((2.0**(k))*L)
     kappa=L/mu
     if T < 2*kappa:
         raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
@@ -78,15 +78,9 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
         if k==0: return int(np.ceil(T/c))
         return int((2**(k))*np.ceil(np.sqrt(kappa)*(p+2)))
 
-    # stages = [0]
-    # for k in range(K):
-    #     stages.append(n_k(k+1))
-    # stages[0] = T - sum(stages[1:])
-    # stages = np.cumsum(stages)
-    stages = ls_stages(50, T)
-    # stages = [1516, 1640, 1849, 2192, 2745, 3623, 5000]
-    # if T>stages[-1]:
-    #     stages.append(T)
+    # stages = ls_stages(50, T)
+    stages = ls_stages(27, T)
+
     loss, full_grad = closure(x, D, labels)
 
     if verbose:

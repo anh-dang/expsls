@@ -19,11 +19,12 @@ def make_closure(loss_fn, prior_prec=1e-2):
             y: labels for the input vectors
             prior_prec: precision of the Gaussian prior (pass 0 to avoid regularization)
         Returns: (loss, gradient)'''
+        dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         # change the Numpy Arrays into PyTorch Tensors
-        X = torch.tensor(X)
+        X = torch.tensor(X, device=dev)
         # Type of X is double, so y must be double.
-        y = torch.tensor(y, dtype=torch.double)
-        w = torch.tensor(w, requires_grad=True)
+        y = torch.tensor(y, dtype=torch.double, device=dev)
+        w = torch.tensor(w, requires_grad=True, device=dev)
 
         # Compute the loss.
         loss = loss_fn(w, X, y) + (prior_prec / 2) * torch.sum(w ** 2)
@@ -32,7 +33,10 @@ def make_closure(loss_fn, prior_prec=1e-2):
             # compute the gradient of loss w.r.t. w.
             loss.backward()
             # Put the gradient and loss back into Numpy.
-            grad = w.grad.detach().numpy()
+            if torch.cuda.is_available():
+                grad = w.grad.detach().cpu().numpy()
+            else:
+                grad = w.grad.detach().numpy()
             loss = loss.item()
 
             return loss, grad

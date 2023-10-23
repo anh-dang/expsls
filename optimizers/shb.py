@@ -33,8 +33,8 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     T=max_epoch
     alpha=1
     if alpha_t=="EXP":
-        #  alpha=(10*(L/mu)/T)**(1./T)
-        alpha=(1/T)**(1./T)
+         alpha=(2*(L/mu)/T)**(1./T)
+        # alpha=(1/T)**(1./T)
 
     if method=='POLYAK':
         gamma = 4/((np.sqrt(L) + np.sqrt(mu))**2)

@@ -153,63 +153,29 @@ for benchmark in benchmarks_list:
 
 opt_list = []
 # MAX_EPOCH=20000
-# MAX_EPOCH = 7649
-MAX_EPOCH = 6000
+MAX_EPOCH = 7000
 
 # RUNS = [0]
-RUNS=[0,1,2]
+RUNS=[0,1,2,3,4]
 
-
-pis = [1]
-
-# # SHB
-for alphat in ['EXP']:
-    # for method in ['SEBBOUH', 'POLYAK', 'GHADIMI', 'WANG21', 'WANG22']:
-    for method in ['SEBBOUH']:
-        # for misspec in [1.0]:
-            for sls in [True, False]:
-            # for sls in [True]:
-                opt_list += [{'name': 'EXP_SHB',
-                            'alpha_t': alphat,
-                            'method': method,
-                            'is_sls': sls,
-                            'mis_spec': 1.0,
-                            'ada': None,
-                            'ld': None,
-                            'ld_sche': None,
-                            'c':1
-                            }]
-                
-# for ada in [1e-1]:
-#     for ld in [1]:
-#         for ld_sche in ['osc', 'add_osc', 0.5, 0.999]:
-#             opt_list += [{'name': 'EXP_SHB',
-#                         'alpha_t': 'CNST',
-#                         'method': 'ADA',
-#                         'is_sls': False,
-#                         'mis_spec': 1.0,
-#                         'ada': ada,
-#                         'ld': ld,
-#                         'ld_sche': ld_sche
-#                         }]
+# SHB
 
 # for alpha_t in ['CNST', 'EXP']:
-# for alpha_t in ['CNST']:
-#     for c in [0.5]:
-#         opt_list += [{'name': 'EXP_SHB',
-#                 'alpha_t': alpha_t,
-#                 'method': 'WANG21',
-#                 'is_sls': False,
-#                 'mis_spec': 1.0,
-#                 'ada': None,
-#                 'ld': None,
-#                 'ld_sche': None,
-#                 'c':c
-#                 }]
-
+for alpha_t in ['CNST']:
+    for c in [0.5]:
+        opt_list += [{'name': 'EXP_SHB',
+                'alpha_t': alpha_t,
+                'method': 'WANG21',
+                'is_sls': False,
+                'mis_spec': 1.0,
+                'ada': None,
+                'ld': None,
+                'ld_sche': None,
+                'c':c
+                }]
 
 opt_list += [{'name': 'EXP_SHB',
-        'alpha_t': 'CNST',
+        'alpha_t': 'EXP',
         'method': 'SEBBOUH',
         'is_sls': False,
         'mis_spec': 1.0,
@@ -223,70 +189,27 @@ for c in [0.5]:
     opt_list += [{'name': 'Mix_SHB',
                 'c':c}]
 
-# opt_list += [{'name': 'EXP_SHB',
-#                 'alpha_t': 'CNST',
-#                 'method': 'WANG22',
-#                 'is_sls': False,
-#                 'mis_spec': 1.0,
-#                 'ada': None,
-#                 'ld': None,
-#                 'ld_sche': None,
-#                 'c':1
-#                 }]
-
-# for mis_spec in [1.0, 1e-1, 1e-3, 1e-5, 0.0, 10, 100]:
-#     opt_list += [{'name': 'EXP_SHB',
-#                 'alpha_t': 'EXP',
-#                 'method': 'SEBBOUH',
-#                 'is_sls': False,
-#                 'mis_spec': mis_spec,
-#                 'ada': None,
-#                 'ld': None,
-#                 'ld_sche': None
-#                 }]
-
-# SGD
-# for alphat in ["DECR"]:
-#     for sls in [False, True]:
-#     # for sls in [False]:
-#         opt_list += [{'name': 'EXP_SGD',
-#                       'alpha_t': alphat,
-#                       'is_sls': sls,
-#                       }]
-
-opt_list += [{'name': 'EXP_SGD',
-                      'alpha_t': "CNST",
-                      'is_sls': False,
-                      'ada': None}]
-
-for sls in [True, False]:
-    opt_list += [{'name': 'EXP_SGD',
-                      'alpha_t': "DECR",
-                      'is_sls': sls,
-                      'ada': None}]
-
-# for ada in [1e-1]:
-#     opt_list += [{'name': 'EXP_SGD',
-#                         'alpha_t': "CNST",
-#                         'is_sls': False,
-#                         'ada': ada}]
-
-
-# # MASG
-# for k in [2, 3]:
-#     # opt_list += [{'name': 'M_ASG',
-#     #             'K': k,
-#     #             'p': 1,
-#     #             'c': 10
-#     #             }]
-
 opt_list += [{'name': 'M_ASHB',
                 'I': 4,
                 'p': 1,
                 'c': 10
                 }]
 
-# #ASGD
+# SGD
+for alphat in ["DECR"]:
+    # for sls in [False, True]:
+    for sls in [False]:
+        opt_list += [{'name': 'EXP_SGD',
+                      'alpha_t': alphat,
+                      'is_sls': sls,
+                      }]
+
+# opt_list += [{'name': 'EXP_SGD',
+#                       'alpha_t': "CNST",
+#                       'is_sls': False,
+#                       'ada': None}]
+
+# ASGD
 rhos=[100]
 rho = 1
 
@@ -299,37 +222,19 @@ rho = 1
 #                           'is_sls': sls
 #                           }]
 
-# opt_list += [{'name': 'EXP_ACC_SGD',
-#                 'alpha_t': "CNST",
-#                 'rho': rho,
-#                 'is_sls': False
-#                 }]
-# opt_list += [{'name': 'EXP_ACC_SGD',
-#                 'alpha_t': "DECR",
-#                 'rho': rho,
-#                 'is_sls': False
-#                 }]
-
-
-# # # #RIT
-# rho=10
-# rho = 1
-# opt_list += [{'name': 'RIT_SGD',
-#               'rho': rho
-#               }]
-# opt_list += [{'name': 'RIT_SHB',
-#               'rho': rho
-#               }]
-# # #
+opt_list += [{'name': 'EXP_ACC_SGD',
+                'alpha_t': "DECR",
+                'rho': rho,
+                'is_sls': False
+                }]
 
 
 for benchmark in benchmarks_list:
     EXP_GROUPS['exp_%s' % benchmark] += hu.cartesian_exp_group(get_benchmark(benchmark, opt_list,
-                                                                             batch_size=[100], 
+                                                                             batch_size=[-10/5], 
                                                                              variance=[0],
                                                                              
                                                                              max_epoch=[MAX_EPOCH],
-                                                                             runs=RUNS, kappa=[8],
-                                                                            #  losses=['squared_loss', 'logistic_loss']))
-                                                                             losses=['squared_loss']))
+                                                                             runs=RUNS, kappa=[256],
+                                                                             losses=['squared_loss', 'logistic_loss']))
 # losses=['squared_loss', 'logistic_loss']
