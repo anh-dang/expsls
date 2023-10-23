@@ -7,10 +7,11 @@ import time
 
 from optimizers.sls import SLS as SLS
 
-
+def ld_01(k, esp=1e-8):
+    return 0.5*(np.sin(k/1000)+1)
 
 def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
-         method=None, x0=None, mu=1,L=1, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None, ld=None):
+         method=None, x0=None, mu=1,L=1, is_sls=False, c=1.0, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None, ld=None, ld_sche=None):
     """
         SHB with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
@@ -23,20 +24,24 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
 
     n = D.shape[0]
     d = D.shape[1]
+    if mu>L:
+        mu = L
  
     m = int(n/batch_size)
 
     T=m*max_epoch
+    T=max_epoch
     alpha=1
     if alpha_t=="EXP":
-         alpha=(1./T)**(1./T)
+        #  alpha=(10*(L/mu)/T)**(1./T)
+        alpha=(1/T)**(1./T)
 
     if method=='POLYAK':
         gamma = 4/((np.sqrt(L) + np.sqrt(mu))**2)
     elif method=='GHADIMI':
         gamma = 2./L
     elif method=='WANG21':
-        gamma = 1./L
+        gamma = c/L
     elif method=='WANG22':
         gamma = 1./L
     elif method=='ADA':
@@ -89,7 +94,14 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     lrn = gamma*alpha
     lr = lrn
     if method=='ADA':
-        ldn = ld
+        if ld_sche == 'osc':
+            ldn = ld_01(t)
+        elif ld_sche == 'add_osc':
+            ldn = ld
+        elif ld_sche != None:
+            ldn = ld
+        else:
+            ldn = ld
     else:
         ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**t)
     ld = ldn
@@ -103,17 +115,18 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         b_k = mu/L
     elif method=='WANG21':
         a_k = lr
-        b_k = (1 - 1/(2*np.sqrt(L/mu)))**2
+        b_k = (1 - (1/2)*np.sqrt(lr*mu))**2
     elif method=='WANG22':
         a_k = lr
-        b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+        b_k = (1 - 0.5/(np.sqrt(L/mu)))**2
     elif method=='ADA':
         a_k = lr/(1 + ldn)
         b_k = ld/(1 + ldn)
     else:
         a_k = lr/(1 + ldn)
         b_k = ((1 - lr * mu)/(1 + ldn)) * ld
-
+    
+    score_dict["lambda_k"] = ld
     score_dict["alpha_k"] = a_k
     score_dict["beta_k"] = b_k
     score_list += [score_dict]
@@ -125,17 +138,21 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         
         if np.linalg.norm(full_grad) <= 1e-12:
             break
-        if np.linalg.norm(full_grad) > 1e10:
+        if np.linalg.norm(full_grad) > 1e20:
             break
         if np.isnan(full_grad).any():
+            break
+        if t >= T:
             break
                    
         # Create Minibatches:
         minibatches = make_minibatches(n, m, batch_size)
         for i in range(m):
+        # for i in range(1):
 
             # get the minibatch for this iteration
             indices = minibatches[i]
+            # indices = minibatches[np.random.randint(m)]
             Di, labels_i = D[indices, :], labels[indices]
 
             # compute the loss, gradients
@@ -152,7 +169,17 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                     lrn=gamma*(alpha**(t+1))
             
             
-            if method != 'ADA':
+            if method == 'ADA':
+                ld = ldn
+                if ld_sche == 'osc':
+                    ldn = ld_01(t+1)
+                elif ld_sche == 'add_osc':
+                    ldn += ld_01(t+1)
+                elif ld_sche != None:
+                    ldn += float(ld_sche)
+                else:
+                    ldn = ld
+            else:
                 ld = ldn
                 ldn = ((1.- 2*eta*L)/lrn*mu) * (1 - (1 - lrn*mu)**(t+1))
              
@@ -164,10 +191,10 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                 b_k = mu/L
             elif method=='WANG21':
                 a_k = lr
-                b_k = (1 - 1/(2*np.sqrt(L/mu)))**2
+                b_k = (1 - (1/2)*np.sqrt(lr*mu))**2
             elif method=='WANG22':
                 a_k = lr
-                b_k = (1 - 0.9/(np.sqrt(L/mu)))**2
+                b_k = (1 - 0.5/(np.sqrt(L/mu)))**2
             elif method=='ADA':
                 a_k = lr/(1 + ldn)
                 b_k = ld/(1 + ldn)
@@ -187,7 +214,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
 
             if (num_grad_evals) % log_idx == 0 or (num_grad_evals) % n== 0:
                 t_end = time.time()
-
+                # print(ldn)
                 loss, full_grad = closure(x, D, labels)
 
                 if verbose:
@@ -211,6 +238,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                 score_dict["train_loss"] = loss
                 score_dict["grad_norm"] = np.linalg.norm(full_grad)
                 score_dict["train_accuracy"] = accuracy(x, D, labels)
+                score_dict["lambda_k"] = ld
                 score_dict["alpha_k"] = a_k
                 score_dict["beta_k"] = b_k
                 if D_test is not None:
@@ -219,12 +247,17 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                     score_dict["test_accuracy"] = accuracy(x, D_test, labels_test)
                 score_list += [score_dict]
                 if np.linalg.norm(full_grad) <= 1e-12:
+                    print(np.linalg.norm(full_grad))
                     break
-                if np.linalg.norm(full_grad) > 1e10:
+                if np.linalg.norm(full_grad) > 1e20:
+                    print(np.linalg.norm(full_grad))
                     break
                 if np.isnan(full_grad).any():
+                    print(full_grad)
                     break
                 t_start=time.time()
             t += 1
+            if t >= T:
+                break
 
     return score_list

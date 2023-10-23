@@ -93,8 +93,8 @@ def minibatch_data(n, batch_size):
         batches.append(indices[start_index:stop_index])
 
     # generate a final, smaller batch if the batch_size doesn't divide evenly into n
-    if num_batches != math.ceil(n / batch_size):
-        batches.append(indices[stop_index:])
+    # if num_batches != math.ceil(n / batch_size):
+    #     batches.append(indices[stop_index:])
 
     return batches
 

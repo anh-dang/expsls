@@ -1544,6 +1544,7 @@ def get_plot(exp_list, savedir_base,
                 linewidth = None
                 markevery = None
                 markersize = None
+                linestyle = None
 
                 if len(style_dict):
                     marker = style_dict.get('marker', marker)
@@ -1552,6 +1553,7 @@ def get_plot(exp_list, savedir_base,
                     linewidth = style_dict.get('linewidth', linewidth)
                     markevery = style_dict.get('markevery', markevery)
                     markersize = style_dict.get('markersize', markersize)
+                    linestyle = style_dict.get('linestyle', linestyle)
 
                 if label in map_legend_list:
                     label = map_legend_list[label]
@@ -1560,12 +1562,12 @@ def get_plot(exp_list, savedir_base,
                     # plot the mean in a line
                     # pplot = pp.add_yxList
                     axis.plot(x_list, y_list, color=color, linewidth=linewidth, markersize=markersize,
-                        label=str(label), marker=marker, markevery=markevery)
+                        label=str(label), marker=marker, markevery=markevery, linestyle=linestyle)
                     # tools.pretty_plot
                 elif mode == 'line':
                     # plot the mean in a line
                     axis.plot(x_list, y_list, color=color, linewidth=linewidth, markersize=markersize,
-                        label=label, marker=marker, markevery=markevery)
+                        label=label, marker=marker, markevery=markevery, linestyle=linestyle)
 
                     if avg_across and hasattr(y_list, 'size'):
                         # add confidence interval

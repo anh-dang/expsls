@@ -79,7 +79,7 @@ def param_l(X,n=1):
     '''Lmin and Lmax in deterministic case case'''
     eigvals=sc.linalg.svdvals(np.matmul(X.T,X))
     Lmax,Lmin=1./n * np.amax(eigvals), 1./n * np.amin(eigvals)
-    print("Lmax: %f,Lmin:%f,kappa:%f"%(Lmax,Lmin,Lmax/Lmin))
+    print("Lmax: %f, Lmin: %f, kappa: %f"%(Lmax,Lmin,Lmax/Lmin))
     return Lmax,Lmin
 
 

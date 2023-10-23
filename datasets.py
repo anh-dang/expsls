@@ -39,9 +39,9 @@ def load_libsvm(name, data_dir):
 
 def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0, 
               is_subsample=0, is_kernelize=0,
-              test_prop=0.2, split_seed=9513451, standardize=False, remove_strong_convexity=False,reuse=True):
+              test_prop=0.2, split_seed=9513451, standardize=False, remove_strong_convexity=False,reuse=True,kappa=None,variance=1e-3):
     
-    if (dataset_name not in [ 'synthetic','synthetic_ls','synthetic_reg']):
+    if (dataset_name not in [ 'synthetic','synthetic_ls','synthetic_reg','synthetic_kappa']):
 
         # real data
         #         data = pickle.load(open(data_dir + data_name +'.pkl', 'rb'), encoding = "latin1")
@@ -94,6 +94,22 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
             A, y, w_true = create_datasetLS(n, d)
             with open('./synt_ls_%d_%d.pkl' % (n, d), 'wb') as handle:
                 pickle.dump({"A": A, "y": y, "w_true": w_true}, handle)
+    
+    if dataset_name=="synthetic_kappa":
+        var = str(variance)
+        if reuse:
+            if os.path.isfile('./synt_kappa_%d_%d_%.2f_%s.pkl'%(n,d,kappa,var)):
+                with open('./synt_kappa_%d_%d_%.2f_%s.pkl'%(n,d,kappa,var), 'rb') as handle:
+                    res = pickle.load(handle)
+                    A, y, w_true =res["A"],res["y"],res["w_true"]
+            else:
+                A, y, w_true = create_dataset_kap(n, d, kappa,variance)
+                with open('./synt_kappa_%d_%d_%.2f_%s.pkl' % (n, d,kappa,var), 'wb') as handle:
+                    pickle.dump({"A":A,"y":y, "w_true":w_true},handle)
+        else:
+            A, y, w_true = create_dataset_kap(n, d, kappa,variance)
+            with open('./synt_kappa_%d_%d_%.2f_%s.pkl' % (n, d,kappa,var), 'wb') as handle:
+                pickle.dump({"A": A, "y": y, "w_true": w_true}, handle)
 
 
     # subsample
@@ -103,7 +119,10 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
         
 
     # split dataset into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed)
+    if dataset_name=="synthetic_kappa":
+        X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed, shuffle=False)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed, shuffle=False)
 
     if remove_strong_convexity:
         #for now we do not care about the test set and only focus on changing X_train such that the training objective is not SC
@@ -183,6 +202,7 @@ def create_datasetLS(n,d):
     XTX = np.dot(X.T, X)
     # X=np.dot(np.sqrt(1/np.diag(XTX)),X)
     Y = np.matmul(X, tW) + d * np.random.normal(size=(n, 1))
+    # Y = np.matmul(X, tW)
     XTY = np.dot(X.T, Y)
     Ws = np.matmul(np.linalg.inv(XTX), XTY)
     return X,Y.reshape(n,),Ws
@@ -259,4 +279,20 @@ def create_dataset(n, d, gamma=0, false_ratio=0):
 
     return X, y, w_star
 
-
+def create_dataset_kap(n,d,kappa,variance=0):
+    min_ei = 5.0
+    max_ei = min_ei*kappa
+    tW = np.random.rand(d, 1)
+    
+    q, _ = np.linalg.qr(np.random.rand(d, d))
+    eigenvalues = np.linspace(np.sqrt(min_ei*n), np.sqrt(max_ei*n), d)
+    D = np.diag(eigenvalues)
+    symmetric_part = np.dot(np.dot(q, D), q.T)
+    non_symmetric_part = np.random.rand(n-d, d)
+    X = np.vstack((symmetric_part, non_symmetric_part))
+    
+    XTX = np.dot(X.T, X)
+    Y = np.matmul(X, tW) + variance * np.random.normal(size=(n, 1))
+    XTY = np.dot(X.T, Y)
+    Ws = np.matmul(np.linalg.inv(XTX), XTY)
+    return X,Y.reshape(n,),Ws

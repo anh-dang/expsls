@@ -9,7 +9,10 @@ from optimizers.exp_step_acc_sgd import *
 from optimizers.rit_sgd import *
 from optimizers.masg import *
 from optimizers.shb import *
-
+from optimizers.adam import *
+from optimizers.rit_shb import *
+from optimizers.mashb import *
+from optimizers.mix_shb import *
 
 import argparse
 import exp_configs
@@ -56,6 +59,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 
 	seed = 42 + exp_dict['runs']
 	np.random.seed(seed)
+	kappa = None
 
 	# default values	
 	if "is_subsample" not in exp_dict.keys():
@@ -94,6 +98,13 @@ def trainval(exp_dict, savedir_base, reset=False):
 		n, d = exp_dict["n_samples"], exp_dict["d"]
 		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
 										 standardize=standardize, remove_strong_convexity=remove_strong_convexity)
+		n = X.shape[0]
+	elif exp_dict["dataset"] == "synthetic_kappa":
+		variance = exp_dict["variance"]
+		n, d, kappa= exp_dict["n_samples"], exp_dict["d"], exp_dict["kappa"]
+		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
+										 standardize=standardize, remove_strong_convexity=remove_strong_convexity, kappa=kappa, variance=variance)
+		n = X.shape[0]
 	else:
 		if is_subsample == 1:
 			n = exp_dict["subsampled_n"]
@@ -112,10 +123,11 @@ def trainval(exp_dict, savedir_base, reset=False):
 
 	if exp_dict["batch_size"]<0:
 		exp_dict["batch_size"]=int(n/(-exp_dict["batch_size"]))
+	print('batch_size:', exp_dict["batch_size"])
 
 	rb=int(exp_dict["batch_size"]/n)
-	if (exp_dict["dataset"],rb) in Lparam.keys():
-		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb)]
+	if (exp_dict["dataset"],rb,kappa) in Lparam.keys():
+		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb,kappa)]
 	else:
 		if rb==1:
 			Lmax,Lmin=param_l(X,exp_dict["batch_size"])
@@ -126,11 +138,11 @@ def trainval(exp_dict, savedir_base, reset=False):
 			# 		Lmaxt, Lmint = param_l(X[i*200:(i+1)*200])
 			# 		Lmax,Lmin=max(Lmax,Lmaxt),min(Lmin,Lmint)
 			# else :
-				Lmax, Lmin = param_l(X)
+			Lmax, Lmin = param_l(X, X.shape[0])
+				# Lmax, Lmin = param_l(X)
 		# if float(args.mu_misspec) > 1:
 		# 	Lmin = float(args.mu_misspec)*Lmin
-
-		Lparam[(exp_dict["dataset"],rb)]=(Lmax,Lmin)
+		Lparam[(exp_dict["dataset"],rb,kappa)]=(Lmax,Lmin)
 
 	#set 1/n as reg factor for all exp
 	# exp_dict["regularization_factor"]= 0.01 #1./n
@@ -138,10 +150,12 @@ def trainval(exp_dict, savedir_base, reset=False):
 	if exp_dict["loss_func"] == "logistic_loss":
 		closure = make_closure(logistic_loss, regularization_factor)
 		Lmax, Lmin = 1./4*Lmax+regularization_factor,1./4*Lmin+regularization_factor
+		print('Lmax: %f, Lmin: %f'%(Lmax,Lmin))
 		print('Kappa for logistic:%f'%(Lmax/Lmin))
 	elif exp_dict["loss_func"] == "squared_loss":
 		closure = make_closure(squared_loss, regularization_factor)
 		Lmax, Lmin = Lmax + regularization_factor, Lmin + regularization_factor
+		print('Lmax: %f, Lmin: %f'%(Lmax,Lmin))
 		print('Kappa for logistic:%f' % (Lmax / Lmin))
 
 	elif exp_dict["loss_func"] == "squared_hinge_loss":
@@ -180,19 +194,35 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 alpha_t=opt_dict['alpha_t'],
 						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
 						 ada=opt_dict['ada'],
-						 ld=opt_dict['ld'])
+						 ld=opt_dict['ld'],
+						 ld_sche=opt_dict['ld_sche'],
+						 c=opt_dict["c"])
 
 	elif opt_dict["name"] == "EXP_SGD":
+		# if exp_dict["batch_size"] < 8000:
+		# 	return
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
-						 gamma=1./Lmax,
+						 gamma=1./Lmax, kappa=Lmax/Lmin,
 						 D=X, labels=y,
 						 is_sls=opt_dict['is_sls'],
 						 alpha_t=opt_dict['alpha_t'],
 						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
 						 ada=opt_dict['ada'])
-
-
+		
+	elif opt_dict["name"] == "ADAM":
+		score_list = ADAM(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
+						 )
+	elif opt_dict["name"] == "Mix_SHB":
+		score_list = Mix_SHB(score_list, closure=closure,batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 L=Lmax, mu=Lmin,
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
+						 c=opt_dict["c"])
 	elif opt_dict["name"] == "EXP_ACC_SGD":
 		score_list = Exp_ACC_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
@@ -202,8 +232,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 rho=opt_dict["rho"],
 						 mu=Lmin,
 						 alpha_t=opt_dict['alpha_t'],
-						 D_test=X_test, labels_test=y_test, verbose=VERBOSE,
-						 is_ADA=opt_dict['is_ADA'])
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE
+						 )
 	# M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 	# 	  x0=None, mu=0.1, L=0.1, p=1, verbose=True, D_test=None, labels_test=None, log_idx=1000)
 	elif opt_dict["name"] == "M_ASG":
@@ -214,7 +244,18 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 p=opt_dict["p"],
 						 c=opt_dict["c"],
 						 mu=Lmin,
-						 D_test=X_test, labels_test=y_test)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+	
+	elif opt_dict["name"] == "M_ASHB":
+		score_list = M_ASHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 L=Lmax,
+						 p=opt_dict["p"],
+						 c=opt_dict["c"],
+						 I=opt_dict["I"],
+						 mu=Lmin,
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 
 	# def RIT_SGD(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 	# 			x0=None, mu=0.1, L_max=0.1, rho=1, verbose=True, D_test=None, labels_test=None, log_idx=1000):
@@ -225,7 +266,16 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 L_max=Lmax,
 						 rho=opt_dict["rho"],
 						 mu=Lmin,
-						 D_test=X_test, labels_test=y_test)
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+		
+	elif opt_dict["name"] == "RIT_SHB":
+		score_list = RIT_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 L_max=Lmax,
+						 rho=opt_dict["rho"],
+						 mu=Lmin,
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 
 
 	else:

@@ -9,7 +9,7 @@ from optimizers.sls import SLS as SLS
 
 
 
-def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
+def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, kappa=1, alpha_t="CNST",
          x0=None, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None):
     """
         SGD with fixed step size for solving finite-sum problems
@@ -27,9 +27,11 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     m = int(n/batch_size)
 
     T=m*max_epoch
+    T= max_epoch
     alpha=1
     if alpha_t!="CNST":
-         alpha=(1./T)**(1./T)
+        # alpha=(2*kappa/T)**(1./T)
+        alpha=(1/T)**(1./T)
 
     if is_sls:
         gamma=2
@@ -81,9 +83,11 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         
         if np.linalg.norm(full_grad) <= 1e-12:
             break
-        if np.linalg.norm(full_grad) > 1e10:
+        if np.linalg.norm(full_grad) > 1e20:
             break
         if np.isnan(full_grad).any():
+            break
+        if t >= T:
             break
                    
         # Create Minibatches:
@@ -143,12 +147,17 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                     score_dict["test_accuracy"] = accuracy(x, D_test, labels_test)
                 score_list += [score_dict]
                 if np.linalg.norm(full_grad) <= 1e-12:
+                    print(np.linalg.norm(full_grad))
                     break
-                if np.linalg.norm(full_grad) > 1e10:
+                if np.linalg.norm(full_grad) > 1e20:
+                    print(np.linalg.norm(full_grad))
                     break
                 if np.isnan(full_grad).any():
+                    print(full_grad)
                     break
                 t_start=time.time()
             t += 1
+            if t >= T:
+                break
 
     return score_list

@@ -6,8 +6,35 @@ from utils import *
 from datasets import *
 from objectives import *
 import time
+from scipy.special import lambertw
 
-def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
+def ls_stages(kap, T):
+    def max_T(kap):
+        a = 3*(2**10)*kap*np.sqrt(kap)/np.log(2)
+        b = 3*(2**8)*(np.e**2)*np.sqrt(kap)/np.log(2)
+        return int(np.ceil(max(a,b)))
+
+    def stages(kap, T):
+        res = np.floor(np.real(lambertw(T*np.log(2)/(2*384*np.sqrt(kap))))/np.log(np.sqrt(2)))
+        return int(res)
+    
+    m_T = max_T(kap)
+    I = stages(kap, m_T)
+    ls = [0]
+    for i in range(I+1):
+#         if i==0:
+#             ls.append(np.ceil(T/2))
+#         else:
+        t = (2**(i/2))*np.sqrt(kap)*(((i/2)+5)*np.log(2)+np.log(kap)/2) * 4/((2 - np.sqrt(2))*15)
+        ls.append(int(np.ceil(t)))
+    T_I = np.sum(ls)
+    if T_I > T:
+        raise ValueError('T must be greater than '+str(T_I))
+    ls[0] = T - T_I
+    ls_stage = np.cumsum(ls)
+    return ls_stage
+
+def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
             x0=None, mu=0.1,L=0.1,p=1,c=10, verbose=True, D_test=None, labels_test=None,log_idx=1000):
     """
         SGD with fixed step size for solving finite-sum problems
@@ -24,7 +51,7 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     m = int(n / batch_size)
 
     T = m * max_epoch
-
+    T = max_epoch
 
     if x0 is None:
         x = np.zeros(d)
@@ -34,28 +61,32 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     else:
         raise ValueError('x0 must be a numpy array of size (d, )')
 
-    y=x.copy()
+    
     px=x.copy()
 
     num_grad_evals = 0
     step_size=1./L
     def a(k):
-        if k ==0 : return  1./L
-        return 1 / (2 ** (2 * (k+1)) * L)
-    b=lambda t: (1-np.sqrt(mu*a(t)))/(1+np.sqrt(mu*a(t)))
+        # if k ==0 : return  1./L
+        # return 1. / (2 ** (k+1) * L)
+        return 1./((2.0**(k))*L)
     kappa=L/mu
+    if T < 2*kappa:
+        raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
 
     def n_k(k):
-        # if k==0: return int(np.ceil(T/c))
-        return int((2**(k+1))*np.ceil(np.sqrt(kappa)*(p+2))*1.5)
-    stages = [0]
-    for k in range(I+1):
-        stages.append(n_k(k))
-    stages[0] = T - sum(stages[1:])
-    stages = np.cumsum(stages)
-    if T>stages[-1]:
-        stages.append(T)
+        if k==0: return int(np.ceil(T/c))
+        return int((2**(k))*np.ceil(np.sqrt(kappa)*(p+2)))
 
+    # stages = [0]
+    # for k in range(K):
+    #     stages.append(n_k(k+1))
+    # stages[0] = T - sum(stages[1:])
+    # stages = np.cumsum(stages)
+    stages = ls_stages(50, T)
+    # stages = [1516, 1640, 1849, 2192, 2745, 3623, 5000]
+    # if T>stages[-1]:
+    #     stages.append(T)
     loss, full_grad = closure(x, D, labels)
 
     if verbose:
@@ -78,7 +109,7 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
         score_dict["test_accuracy"] = accuracy(x, D_test, labels_test)
     score_list += [score_dict]
 
-
+    T = stages[-1]
     t=0
     for k in range(max_epoch):
         t_start = time.time()
@@ -86,7 +117,7 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
 
         if np.linalg.norm(full_grad) <= 1e-12:
             break
-        # if np.linalg.norm(full_grad) > 1e10:
+        # if np.linalg.norm(full_grad) > 1e20:
         #     break
         if np.isnan(full_grad).any():
             break
@@ -103,14 +134,16 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
             indices = minibatches[i]
             # indices=np.array([np.random.randint(low=0,high=n)])
             Di, labels_i = D[indices, :], labels[indices]
-            y= (1+b(k))*x -b(k)*(px)
-            px = x
+            temp = x.copy()
+            stage = np.searchsorted(stages, t)
+            a_k = a(stage)
+            b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
            # compute the loss, gradients
-            loss, y_grad = closure(y, Di, labels_i)
-            gk = y_grad
+            loss, gk = closure(x, Di, labels_i)
+            x -= a_k * gk - b_k * (x - px)
+            px = temp
             num_grad_evals = num_grad_evals + batch_size
-            x =y- a(k) * gk
-
+            
 
             if (num_grad_evals) % log_idx == 0 or (num_grad_evals) % n== 0:
                 t_end=time.time()
@@ -142,7 +175,7 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
                 if np.linalg.norm(full_grad) <= 1e-12:
                     print("Fast convergence!!")
                     break
-                # if np.linalg.norm(full_grad) > 1e10:
+                # if np.linalg.norm(full_grad) > 1e20:
                 #     print("Divergence!!")
                 #     break
                 if np.isnan(full_grad).any():

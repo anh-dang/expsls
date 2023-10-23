@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from dependencies import *
@@ -6,11 +8,12 @@ from utils import *
 from datasets import *
 from objectives import *
 import time
+import math
 
-def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
-            x0=None, mu=0.1,L=0.1,p=1,c=10, verbose=True, D_test=None, labels_test=None,log_idx=1000):
+def RIT_SHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
+            x0=None, mu=0.1,L_max=0.1,rho=1, verbose=True, D_test=None, labels_test=None,log_idx=1000):
     """
-        SGD with fixed step size for solving finite-sum problems
+        SHB with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
         batch_size: the size of minibatches to use.
         D: the set of input vectors (usually X).
@@ -24,7 +27,15 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     m = int(n / batch_size)
 
     T = m * max_epoch
-
+    T0=math.ceil(T/2)
+    b=max((2.*L_max**2)/mu,2*rho*L_max)
+    s=2*b/mu
+    kappa= L_max/mu
+    def lr(t):
+        if t<=T0 or T <=kappa:
+            return 1./b
+        else:
+            return 2./(mu*(s+t-T0))
 
     if x0 is None:
         x = np.zeros(d)
@@ -34,27 +45,11 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     else:
         raise ValueError('x0 must be a numpy array of size (d, )')
 
-    y=x.copy()
-    px=x.copy()
-
+    x=x.copy()
+    x_prev = x.copy()
     num_grad_evals = 0
-    step_size=1./L
-    def a(k):
-        if k ==0 : return  1./L
-        return 1 / (2 ** (2 * (k+1)) * L)
-    b=lambda t: (1-np.sqrt(mu*a(t)))/(1+np.sqrt(mu*a(t)))
-    kappa=L/mu
 
-    def n_k(k):
-        # if k==0: return int(np.ceil(T/c))
-        return int((2**(k+1))*np.ceil(np.sqrt(kappa)*(p+2))*1.5)
-    stages = [0]
-    for k in range(I+1):
-        stages.append(n_k(k))
-    stages[0] = T - sum(stages[1:])
-    stages = np.cumsum(stages)
-    if T>stages[-1]:
-        stages.append(T)
+    # pa_t=1/np.sqrt(rho*L/mu)
 
     loss, full_grad = closure(x, D, labels)
 
@@ -62,7 +57,7 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
         output = 'Epoch.: %d, Grad. norm: %.2e' % \
                  (0, np.linalg.norm(full_grad))
         output += ', Func. value: %e' % loss
-        output += ', Step size: %e' % step_size
+        # output += ', Step size: %e' % step_size
         output += ', Num gradient evaluations/n: %f' % (num_grad_evals / n)
         print(output)
 
@@ -83,33 +78,31 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
     for k in range(max_epoch):
         t_start = time.time()
 
-
         if np.linalg.norm(full_grad) <= 1e-12:
             break
-        # if np.linalg.norm(full_grad) > 1e10:
-        #     break
+        if np.linalg.norm(full_grad) > 1e10:
+            break
         if np.isnan(full_grad).any():
             break
-        if t >= T:
-            break
+
         # Create Minibatches:
-
-
         minibatches = make_minibatches(n, m, batch_size)
-
         for i in range(m):
-
+            t +=1
             # get the minibatch for this iteration
             indices = minibatches[i]
-            # indices=np.array([np.random.randint(low=0,high=n)])
             Di, labels_i = D[indices, :], labels[indices]
-            y= (1+b(k))*x -b(k)*(px)
-            px = x
-           # compute the loss, gradients
-            loss, y_grad = closure(y, Di, labels_i)
-            gk = y_grad
+
+            # compute the loss, gradients
+            loss, x_grad = closure(x, Di, labels_i)
+
+            gk = x_grad
             num_grad_evals = num_grad_evals + batch_size
-            x =y- a(k) * gk
+            
+            temp = x.copy()
+            bk = (1 - 0.5*np.sqrt(lr(t)*mu))**2
+            x -= lr(t) * gk - bk*(x - x_prev)
+            x_prev = temp
 
 
             if (num_grad_evals) % log_idx == 0 or (num_grad_evals) % n== 0:
@@ -120,12 +113,12 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
                     output = 'Epoch.: %d, Grad. norm: %.2e' % \
                              (int(t*batch_size/n), np.linalg .norm(full_grad))
                     output += ', Func. value: %e' % loss
-                    output += ', Step size: %e' % step_size
                     output += ', Num gradient evaluations/n: %f' % (num_grad_evals / log_idx)
                     print(output)
 
-                score_dict = {"itr": (t+1)}
+                score_dict = {"itr": (t + 1)}
                 score_dict["time"]=t_end-t_start
+
                 score_dict["n_grad_evals"] = num_grad_evals
                 if batch_size==n:
                     score_dict["n_grad_evals_normalized"] = num_grad_evals / n
@@ -140,17 +133,13 @@ def M_ASG(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
                     score_dict["test_accuracy"] = accuracy(x, D_test, labels_test)
                 score_list += [score_dict]
                 if np.linalg.norm(full_grad) <= 1e-12:
-                    print("Fast convergence!!")
                     break
-                # if np.linalg.norm(full_grad) > 1e10:
-                #     print("Divergence!!")
-                #     break
+                if np.linalg.norm(full_grad) > 1e10:
+                    break
                 if np.isnan(full_grad).any():
-                    print("Nannnn!!")
                     break
-            t += 1
-            if t >= T:
-                break
-            t_start=time.time()
+                t_start = time.time()
+        # time_epoch = t_end - t_start
+        # score_list[len(score_list) - 1]["time"] = time_epoch
 
     return score_list
