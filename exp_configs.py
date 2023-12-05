@@ -162,7 +162,7 @@ RUNS=[0,1,2,3,4]
 
 # for alpha_t in ['CNST', 'EXP']:
 for alpha_t in ['CNST']:
-    for c in [0.5]:
+    for c in [1]:
         opt_list += [{'name': 'EXP_SHB',
                 'alpha_t': alpha_t,
                 'method': 'WANG21',
@@ -182,7 +182,7 @@ opt_list += [{'name': 'EXP_SHB',
         'ada': None,
         'ld': None,
         'ld_sche': None,
-        'c': 1.0
+        'c': 1
         }]
 
 for c in [0.5]:
@@ -202,12 +202,14 @@ for alphat in ["DECR"]:
         opt_list += [{'name': 'EXP_SGD',
                       'alpha_t': alphat,
                       'is_sls': sls,
+                      'ada': None,
+                      'new': True
                       }]
 
-# opt_list += [{'name': 'EXP_SGD',
-#                       'alpha_t': "CNST",
-#                       'is_sls': False,
-#                       'ada': None}]
+opt_list += [{'name': 'EXP_SGD',
+                      'alpha_t': "CNST",
+                      'is_sls': False,
+                      'ada': None}]
 
 # ASGD
 rhos=[100]
@@ -228,13 +230,19 @@ opt_list += [{'name': 'EXP_ACC_SGD',
                 'is_sls': False
                 }]
 
+opt_list += [{'name': 'EXP_ACC_SGD',
+                'alpha_t': "CNST",
+                'rho': rho,
+                'is_sls': False
+                }]
+
 
 for benchmark in benchmarks_list:
     EXP_GROUPS['exp_%s' % benchmark] += hu.cartesian_exp_group(get_benchmark(benchmark, opt_list,
-                                                                             batch_size=[-10/5], 
-                                                                             variance=[0],
+                                                                             batch_size=[-1,-10/9], 
+                                                                             variance=[1, 1e-2, 1e-4],
                                                                              
                                                                              max_epoch=[MAX_EPOCH],
-                                                                             runs=RUNS, kappa=[256],
+                                                                             runs=RUNS, kappa=[200, 100, 50],
                                                                              losses=['squared_loss', 'logistic_loss']))
 # losses=['squared_loss', 'logistic_loss']
