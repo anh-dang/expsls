@@ -10,7 +10,8 @@ def get_benchmark(benchmark,
                   max_epoch=[50],
                   losses=["logistic_loss", "squared_loss", "squared_hinge_loss"],
                   kappa=[100],
-                  variance=None
+                  variance=None,
+                  is_kernelize=None,
                   ):
     if benchmark == "mushrooms":
         return {"dataset": ["mushrooms"],
@@ -19,7 +20,8 @@ def get_benchmark(benchmark,
                 "regularization_factor": 0.01,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
-                "runs": runs}
+                "runs": runs,
+                "is_kernelize": is_kernelize}
 
     elif benchmark == "ijcnn":
         return {"dataset": ["ijcnn"],
@@ -28,7 +30,8 @@ def get_benchmark(benchmark,
                 "regularization_factor": 0.01,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
-                "runs": runs}
+                "runs": runs,
+                "is_kernelize": is_kernelize}
 
     elif benchmark == "a1a":
         return {"dataset": ["a1a"],
@@ -84,7 +87,8 @@ def get_benchmark(benchmark,
                 "max_epoch": max_epoch,
                 "runs": runs,
                 "is_subsample": 1,
-                "subsampled_n": 10000}
+                "subsampled_n": 10000,
+                "is_kernelize": is_kernelize}
 
     elif benchmark == "synthetic_interpolation":
         return {"dataset": ["synthetic"],
@@ -98,6 +102,7 @@ def get_benchmark(benchmark,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs}
+    
     elif benchmark == "synthetic_ls":
         return {"dataset": ["synthetic_ls"],
                 "loss_func": ["squared_loss"],
@@ -133,6 +138,20 @@ def get_benchmark(benchmark,
                 "kappa":kappa,
                 "variance":variance,
                 }
+    
+    elif benchmark == "synthetic_test":
+        return {"dataset": ["synthetic_test"],
+                "loss_func": ["squared_loss"],
+                "opt": opt_list,
+                "regularization_factor": 0.,
+                "n_samples": [3],
+                "d": [2],
+                "batch_size": batch_size,
+                "max_epoch": max_epoch,
+                "runs": runs,
+                "kappa":kappa,
+                "variance":variance,
+                }
 
     else:
         print("Benchmark unknown")
@@ -146,7 +165,7 @@ EXP_GROUPS = {}
 # # benchmarks_interpolation_list = ["synthetic_interpolation"]
 #
 
-benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "synthetic_ls", "synthetic_kappa"]
+benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "synthetic_ls", "synthetic_kappa", "synthetic_test"]
 
 for benchmark in benchmarks_list:
     EXP_GROUPS["exp_%s" % benchmark] = []
@@ -206,10 +225,10 @@ for alphat in ["DECR"]:
                       'new': True
                       }]
 
-opt_list += [{'name': 'EXP_SGD',
-                      'alpha_t': "CNST",
-                      'is_sls': False,
-                      'ada': None}]
+# opt_list += [{'name': 'EXP_SGD',
+#                       'alpha_t': "CNST",
+#                       'is_sls': False,
+#                       'ada': None}]
 
 # ASGD
 rhos=[100]
@@ -230,19 +249,20 @@ opt_list += [{'name': 'EXP_ACC_SGD',
                 'is_sls': False
                 }]
 
-opt_list += [{'name': 'EXP_ACC_SGD',
-                'alpha_t': "CNST",
-                'rho': rho,
-                'is_sls': False
-                }]
+# opt_list += [{'name': 'EXP_ACC_SGD',
+#                 'alpha_t': "CNST",
+#                 'rho': rho,
+#                 'is_sls': False
+#                 }]
 
 
 for benchmark in benchmarks_list:
     EXP_GROUPS['exp_%s' % benchmark] += hu.cartesian_exp_group(get_benchmark(benchmark, opt_list,
-                                                                             batch_size=[-1,-10/9], 
-                                                                             variance=[1, 1e-2, 1e-4],
-                                                                             
+                                                                             batch_size=[-10/9], 
+                                                                            #  variance=[1, 1e-2, 1e-4],
+                                                                             is_kernelize=1,
                                                                              max_epoch=[MAX_EPOCH],
-                                                                             runs=RUNS, kappa=[200, 100, 50],
-                                                                             losses=['squared_loss', 'logistic_loss']))
-# losses=['squared_loss', 'logistic_loss']
+                                                                             runs=RUNS, 
+                                                                            #  kappa=[200, 100, 50],
+                                                                             losses=['squared_loss']))
+                                                                            # losses=['squared_loss', 'logistic_loss']
