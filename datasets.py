@@ -41,7 +41,7 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
               is_subsample=0, is_kernelize=0,
               test_prop=0.2, split_seed=9513451, standardize=False, remove_strong_convexity=False,reuse=True,kappa=None,variance=1e-3):
     
-    if (dataset_name not in [ 'synthetic','synthetic_ls','synthetic_reg','synthetic_kappa']):
+    if (dataset_name not in [ 'synthetic','synthetic_ls','synthetic_reg','synthetic_kappa','synthetic_test']):
 
         # real data
         #         data = pickle.load(open(data_dir + data_name +'.pkl', 'rb'), encoding = "latin1")
@@ -95,7 +95,7 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
             with open('./synt_ls_%d_%d.pkl' % (n, d), 'wb') as handle:
                 pickle.dump({"A": A, "y": y, "w_true": w_true}, handle)
     
-    if dataset_name=="synthetic_kappa":
+    if dataset_name=="synthetic_kappa" or dataset_name=="synthetic_test":
         var = str(variance)
         if reuse:
             if os.path.isfile('./synt_kappa_%d_%d_%.2f_%s.pkl'%(n,d,kappa,var)):
