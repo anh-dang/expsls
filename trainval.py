@@ -105,6 +105,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
 										 standardize=standardize, remove_strong_convexity=remove_strong_convexity, kappa=kappa, variance=variance)
 		n = X.shape[0]
+		if "c" in opt_dict.keys():
+			opt_dict["c"] = 1/((-exp_dict["batch_size"])*kappa)
 	elif exp_dict["dataset"] == "synthetic_test":
 		variance = exp_dict["variance"]
 		n, d, kappa= exp_dict["n_samples"], exp_dict["d"], exp_dict["kappa"]
@@ -197,6 +199,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 	# 					 D_test=X_test, labels_test=y_test)
 
 	if opt_dict["name"] == "EXP_SHB":
+		if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"] < 2500 or exp_dict["batch_size"] > 3500) and opt_dict['method']=='SEBBOUH':
+			return
 		score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 D=X, labels=y, method=opt_dict['method'],
@@ -210,8 +214,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 c=opt_dict["c"])
 
 	elif opt_dict["name"] == "EXP_SGD":
-		# if exp_dict["batch_size"] < 8000:
-		# 	return
+		if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"] < 2500 or exp_dict["batch_size"] > 3500):
+			return
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 gamma=1./Lmax, kappa=Lmax/Lmin,

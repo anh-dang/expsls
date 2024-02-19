@@ -8,7 +8,7 @@ import time
 from optimizers.sls import SLS as SLS
 
 def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None,
-    x0=None, mu=1,L=1, is_sls=False, c=0.5, verbose=False, D_test=None, labels_test=None, log_idx=1000):
+    x0=None, mu=1,L=1, is_sls=False, c=0.5, verbose=False, D_test=None, labels_test=None, log_idx=100):
     """
         Mix-SHB for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.

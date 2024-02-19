@@ -119,10 +119,10 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
         
 
     # split dataset into train and test sets
-    if dataset_name=="synthetic_kappa":
+    if dataset_name in [ 'synthetic','synthetic_ls','synthetic_reg','synthetic_kappa','synthetic_test']:
         X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed, shuffle=False)
     else:
-        X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed, shuffle=False)
+        X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=test_prop, random_state=split_seed)
 
     if remove_strong_convexity:
         #for now we do not care about the test set and only focus on changing X_train such that the training objective is not SC

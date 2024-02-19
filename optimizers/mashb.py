@@ -35,7 +35,7 @@ def ls_stages(kap, T):
     return ls_stage
 
 def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100, I=2,
-            x0=None, mu=0.1,L=0.1,p=1,c=10, verbose=True, D_test=None, labels_test=None,log_idx=1000):
+            x0=None, mu=0.1,L=0.1,p=1,c=10, verbose=True, D_test=None, labels_test=None,log_idx=100):
     """
         Multi-stage SHB for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.

@@ -10,7 +10,7 @@ from optimizers.sls import SLS as SLS
 
 
 def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, kappa=1, alpha_t="CNST",
-         x0=None, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None):
+         x0=None, is_sls=False, verbose=True, D_test=None, labels_test=None, log_idx=100, ada=None):
     """
         SGD with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.

@@ -11,7 +11,8 @@ def ld_01(k, esp=1e-8):
     return 0.5*(np.sin(k/1000)+1)
 
 def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=None, alpha_t="CNST",
-         method=None, x0=None, mu=1,L=1, is_sls=False, c=1.0, verbose=True, D_test=None, labels_test=None, log_idx=1000, ada=None, ld=None, ld_sche=None):
+         method=None, x0=None, mu=1,L=1, is_sls=False, c=1.0, verbose=True, D_test=None, labels_test=None, 
+         log_idx=100, ada=None, ld=None, ld_sche=None):
     """
         SHB with fixed step size for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
