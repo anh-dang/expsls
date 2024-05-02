@@ -80,7 +80,7 @@ def minibatch_data(n, batch_size):
         batch_size: size of the desired minibatches'''
     # shuffle training set indices before forming minibatches
     indices = np.arange(n)
-    np.random.shuffle(indices)
+    # np.random.shuffle(indices)
 
     batches = []
     num_batches = math.floor(n / batch_size)

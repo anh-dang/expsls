@@ -29,7 +29,8 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
         mu = L
  
     m = int(n/batch_size)
-
+    if batch_size/n < 1:
+        c = 1/((1 - batch_size/n)*(np.sqrt(L/mu)))
     T=m*max_epoch
     T=max_epoch
     alpha=1
@@ -48,7 +49,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     elif method=='ADA':
         gamma = ada
     else:
-        gamma = 1./(2*L)
+        gamma = 1./(4*L)
     
     if is_sls:
         gamma=1

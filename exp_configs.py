@@ -3,6 +3,10 @@ import itertools
 import numpy as np
 from experiments_config.kernelize_exp import *
 from experiments_config.syn_interp_exp import *
+from experiments_config.syn_vary_n_exp import *
+from experiments_config.syn_cyclic_exp import *
+from experiments_config.syn_check_alpha_beta import *
+
 
 def get_benchmark(benchmark,
                   opt_list,
@@ -11,14 +15,17 @@ def get_benchmark(benchmark,
                   max_epoch=[50],
                   losses=["logistic_loss", "squared_loss", "squared_hinge_loss"],
                   kappa=[100],
+                  n_samples=[10000],
+                  d=[20],
                   variance=None,
                   is_kernelize=None,
+                  regularization_factor=0
                   ):
     if benchmark == "mushrooms":
         return {"dataset": ["mushrooms"],
                 "loss_func": losses,
                 "opt": opt_list,
-                "regularization_factor": 0,
+                "regularization_factor": regularization_factor,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs,
@@ -28,7 +35,7 @@ def get_benchmark(benchmark,
         return {"dataset": ["ijcnn"],
                 "loss_func": losses,
                 "opt": opt_list,
-                "regularization_factor": 0.01,
+                "regularization_factor": regularization_factor,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs,
@@ -83,7 +90,7 @@ def get_benchmark(benchmark,
         return {"dataset": ["rcv1"],
                 "loss_func": losses,
                 "opt": opt_list,
-                "regularization_factor": 0.01,
+                "regularization_factor": regularization_factor,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs,
@@ -98,7 +105,7 @@ def get_benchmark(benchmark,
                 "regularization_factor": 0.01,
                 "margin": [0.1],
                 "false_ratio": [0, 0.1, 0.2],
-                "n_samples": [10000],
+                "n_samples": n_samples,
                 "d": [200],
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
@@ -109,8 +116,8 @@ def get_benchmark(benchmark,
                 "loss_func": ["squared_loss"],
                 "opt": opt_list,
                 "regularization_factor": 0.,
-                "n_samples": [10000],
-                "d": [20],
+                "n_samples": n_samples,
+                "d": d,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs}
@@ -120,8 +127,8 @@ def get_benchmark(benchmark,
                 "loss_func": ["logistic_loss"],
                 "opt": opt_list,
                 "regularization_factor": 1. / 10000,
-                "n_samples": [10000],
-                "d": [20],
+                "n_samples": n_samples,
+                "d": d,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs}
@@ -131,8 +138,8 @@ def get_benchmark(benchmark,
                 "loss_func": ["squared_loss"],
                 "opt": opt_list,
                 "regularization_factor": 0.,
-                "n_samples": [10000],
-                "d": [20],
+                "n_samples": n_samples,
+                "d": d,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs,
@@ -145,8 +152,8 @@ def get_benchmark(benchmark,
                 "loss_func": ["squared_loss"],
                 "opt": opt_list,
                 "regularization_factor": 0.,
-                "n_samples": [300],
-                "d": [10],
+                "n_samples": n_samples,
+                "d": d,
                 "batch_size": batch_size,
                 "max_epoch": max_epoch,
                 "runs": runs,
@@ -160,10 +167,10 @@ def get_benchmark(benchmark,
 
 
 def get_exp_group(opt_list, benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "synthetic_ls", "synthetic_kappa", "synthetic_test"],
-                  max_epoch=1000, runs=[0,1,2], 
-                  batch_size=[1, 100, -1], 
+                  max_epoch=1000, n_samples=[10000], d=[20],
+                  runs=[0,1,2], batch_size=[1, 100, -1], 
                   losses=["logistic_loss", "squared_loss", "squared_hinge_loss"], 
-                  kappa=[100], variance=[0], is_kernelize=0):
+                  kappa=[100], variance=[0], is_kernelize=0, regularization_factor=0.01):
     exp_groups = {}
     for benchmark in benchmarks_list:
         exp_groups['exp_%s' % benchmark] = hu.cartesian_exp_group(get_benchmark(benchmark, opt_list,
@@ -173,7 +180,10 @@ def get_exp_group(opt_list, benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "sy
                                                                              max_epoch=[max_epoch],
                                                                              runs=runs, 
                                                                              kappa=kappa,
-                                                                             losses=losses))
+                                                                             n_samples=n_samples,
+                                                                             d=d,
+                                                                             losses=losses,
+                                                                             regularization_factor=regularization_factor))
     return exp_groups
 
-EXP_GROUPS = get_exp_group(**EXP_SYN_INTERP_CONFIGS)
+EXP_GROUPS = get_exp_group(**EXP_KERNEL_CONFIGS)
