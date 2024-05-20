@@ -66,9 +66,7 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
     kappa=L/mu
     if T < 2*kappa:
         raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
-
     stages = ls_stages(kappa, T, c)
-
     loss, full_grad = closure(x, D, labels)
 
     if verbose:

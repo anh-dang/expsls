@@ -188,4 +188,4 @@ def get_exp_group(opt_list, benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "sy
                                                                              regularization_factor=regularization_factor))
     return exp_groups
 
-EXP_GROUPS = get_exp_group(**EXP_SYN_NON_INTERP_COMPARE_CONFIGS)
+EXP_GROUPS = get_exp_group(**EXP_SYN_NON_INTERP_CONFIGS)

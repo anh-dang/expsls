@@ -293,7 +293,7 @@ def create_dataset(n, d, gamma=0, false_ratio=0):
     return X, y, w_star
 
 def create_dataset_kap(n,d,kappa,variance=0):
-    min_ei = 5.0
+    min_ei = 10.0
     max_ei = min_ei*kappa
     tW = np.random.rand(d, 1)
     
