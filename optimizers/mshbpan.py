@@ -8,29 +8,24 @@ from objectives import *
 import time
 from scipy.special import lambertw
 
-def ls_stages(kap, T, c='auto'):
+def ls_stages(kap, T, C):
+    stage_len = int(np.ceil(T/np.emath.logn(C, T*np.sqrt(kap))))
+    # I = int(np.floor(T/stage_len))
+    ls_stage = []
+    cur_len = 0
+    i=1
+    while cur_len<T:
+        cur_len = stage_len*i
+        if cur_len > T:
+          break
+        ls_stage.append(cur_len)
+        i+=1
+    ls_stage.append(T)
+    # print(len(ls_stage))
+    return np.array(ls_stage)
 
-    def stages(kap, T):
-        res = np.floor(np.real(lambertw(T*np.log(2)/(2*np.sqrt(kap))))/np.log(np.sqrt(2)))
-        return int(res)
-    
-    I = stages(kap, T)
-    if c == 'auto':
-        T_0 = 100*np.sqrt(kap)
-    else:
-        T_0 = int(T*c)
-    T_left = T - T_0
-    total = sum([2**(i/2) for i in range(1, I+1)])
-    ls = [T_0]
-    for i in range(1,I+1):
-        t = (T_left/total)*(2**(i/2))
-        ls.append(int(np.ceil(t)))
-    ls_stage = np.cumsum(ls)
-    ls_stage[-1] = T
-    return ls_stage
-
-def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
-            x0=None, mu=0.1,L=0.1, c='auto', beta_const=False, verbose=True, D_test=None, labels_test=None,log_idx=100):
+def M_SHB_PAN(score_list, closure, D, labels, batch_size=1, max_epoch=100,
+            x0=None, mu=0.1,L=0.1, C=2, verbose=True, D_test=None, labels_test=None,log_idx=100):
     """
         Multi-stage SHB for solving finite-sum problems
         Closure: a PyTorch-style closure returning the objective value and it's gradient.
@@ -61,13 +56,14 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 
     num_grad_evals = 0
     step_size=1./L
-    def a(k):
-        return 0.5/((2.0**(k))*L)
+    def a(k, C):
+        return 0.5/(( (C)**(k))*L)
     kappa=L/mu
     if T < 2*kappa:
         raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
-
-    stages = ls_stages(kappa, T, c)
+    if C == 'max':
+        C = int(T*np.sqrt(kappa))
+    stages = ls_stages(kappa, T, C)
 
     loss, full_grad = closure(x, D, labels)
 
@@ -118,11 +114,8 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
             Di, labels_i = D[indices, :], labels[indices]
             temp = x.copy()
             stage = np.searchsorted(stages, t)
-            a_k = a(stage)
-            if beta_const:
-                b_k = (1 - (1/2)*np.sqrt(mu/(2*L)))**2
-            else:
-                b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
+            a_k = a(stage, C)
+            b_k = (1 - (1/2)*np.sqrt(mu/(2*L)))**2
            # compute the loss, gradients
             loss, gk = closure(x, Di, labels_i)
             x -= a_k * gk - b_k * (x - px)

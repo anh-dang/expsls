@@ -3,6 +3,7 @@ import os.path
 import numpy
 
 from dependencies import *
+from haven import haven_utils as hu
 
 
 LIBSVM_URL = "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/"
@@ -111,6 +112,18 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
             with open('./synt_kappa_%d_%d_%.2f_%s.pkl' % (n, d,kappa,var), 'wb') as handle:
                 pickle.dump({"A": A, "y": y, "w_true": w_true}, handle)
 
+    if dataset_name == "matrix_fac":
+        fname = './' + 'matrix_fac.pkl'
+        if not os.path.exists(fname):
+            data = generate_synthetic_matrix_factorization_data()
+            hu.save_pkl(fname, data)
+
+        A, y = hu.load_pkl(fname)
+
+        # X_train, X_test, y_train, y_test = train_test_split(A, y, test_size=0.2, random_state=9513451)
+
+        # training_set = torch.utils.data.TensorDataset(torch.tensor(X_train, dtype=torch.float), torch.tensor(y_train, dtype=torch.float))
+        # test_set = torch.utils.data.TensorDataset(torch.tensor(X_test, dtype=torch.float), torch.tensor(y_test, dtype=torch.float))
 
     # subsample
     if is_subsample == 1:
@@ -296,3 +309,18 @@ def create_dataset_kap(n,d,kappa,variance=0):
     XTY = np.dot(X.T, Y)
     Ws = np.matmul(np.linalg.inv(XTX), XTY)
     return X,Y.reshape(n,),Ws
+
+def generate_synthetic_matrix_factorization_data(xdim=6, ydim=10, nsamples=1000, A_condition_number=1e-10):
+	"""
+    Generate a synthetic matrix factorization dataset as suggested by Ben Recht.
+		See: https://github.com/benjamin-recht/shallow-linear-net/blob/master/TwoLayerLinearNets.ipynb.
+	"""
+	Atrue = np.linspace(1, A_condition_number, ydim
+					   ).reshape(-1, 1) * np.random.rand(ydim, xdim)
+	# the inputs
+	X = np.random.randn(xdim, nsamples)
+	# the y's to fit
+	Ytrue = Atrue.dot(X)
+	data = (X.T, Ytrue.T)
+
+	return data

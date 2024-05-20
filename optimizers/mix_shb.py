@@ -75,8 +75,8 @@ def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
     
     #For stage 2
-    alpha=(3*(L/mu)/T1)**(1./T1)
-    # alpha=(1/T1)**(1./T1)
+    # alpha=(3*(L/mu)/T1)**(1./T1)
+    alpha=(1/T1)**(1./T1)
     gamma = 1./(2*L)
     # gamma = 1e-3
     eta = gamma*alpha

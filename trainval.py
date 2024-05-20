@@ -13,6 +13,7 @@ from optimizers.adam import *
 from optimizers.rit_shb import *
 from optimizers.mashb import *
 from optimizers.mix_shb import *
+from optimizers.mshbpan import *
 
 import argparse
 import exp_configs
@@ -199,8 +200,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 	# 					 D_test=X_test, labels_test=y_test)
 
 	if opt_dict["name"] == "EXP_SHB":
-		if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"]/n < 0.45 or exp_dict["batch_size"]/n > 0.55) and opt_dict['method']=='SEBBOUH':
-			return
+		# if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"]/n < 0.45 or exp_dict["batch_size"]/n > 0.55) and opt_dict['method']=='SEBBOUH':
+		# 	return
 		score_list = Exp_SHB(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 D=X, labels=y, method=opt_dict['method'],
@@ -214,8 +215,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 c=opt_dict["c"])
 
 	elif opt_dict["name"] == "EXP_SGD":
-		if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"]/n < 0.45 or exp_dict["batch_size"]/n > 0.55):
-			return
+		# if exp_dict["dataset"] == "synthetic_kappa" and (exp_dict["batch_size"]/n < 0.45 or exp_dict["batch_size"]/n > 0.55):
+		# 	return
 		score_list = Exp_SGD(score_list, closure=closure, batch_size=exp_dict["batch_size"],
 						 max_epoch=exp_dict["max_epoch"],
 						 gamma=1./Lmax, kappa=Lmax/Lmin,
@@ -266,10 +267,18 @@ def trainval(exp_dict, savedir_base, reset=False):
 						 max_epoch=exp_dict["max_epoch"],
 						 D=X, labels=y,
 						 L=Lmax,
-						 p=opt_dict["p"],
-						 c=opt_dict["c"],
-						 I=opt_dict["I"],
 						 mu=Lmin,
+						 c=opt_dict["c"],
+						 beta_const=opt_dict["beta_const"],
+						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
+	
+	elif opt_dict["name"] == "M_SHB_PAN":
+		score_list = M_SHB_PAN(score_list, closure=closure, batch_size=exp_dict["batch_size"],
+						 max_epoch=exp_dict["max_epoch"],
+						 D=X, labels=y,
+						 L=Lmax,
+						 mu=Lmin,
+						 C=opt_dict["C"],
 						 D_test=X_test, labels_test=y_test, verbose=VERBOSE)
 
 	# def RIT_SGD(score_list, closure, D, labels, batch_size=1, max_epoch=100,

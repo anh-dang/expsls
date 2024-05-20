@@ -35,7 +35,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     T=max_epoch
     alpha=1
     if alpha_t=="EXP":
-         alpha=(2*(L/mu)/T)**(1./T)
+         alpha=(10*(L/mu)/T)**(1./T)
         # alpha=(1/T)**(1./T)
 
     if method=='POLYAK':
@@ -49,7 +49,7 @@ def Exp_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     elif method=='ADA':
         gamma = ada
     else:
-        gamma = 1./(4*L)
+        gamma = 1./(2*L)
     
     if is_sls:
         gamma=1

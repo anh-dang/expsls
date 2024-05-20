@@ -6,6 +6,8 @@ from experiments_config.syn_interp_exp import *
 from experiments_config.syn_vary_n_exp import *
 from experiments_config.syn_cyclic_exp import *
 from experiments_config.syn_check_alpha_beta import *
+from experiments_config.syn_non_interp_exp import *
+from experiments_config.syn_non_interp_compare import *
 
 
 def get_benchmark(benchmark,
@@ -186,4 +188,4 @@ def get_exp_group(opt_list, benchmarks_list = ["mushrooms", "ijcnn", "rcv1", "sy
                                                                              regularization_factor=regularization_factor))
     return exp_groups
 
-EXP_GROUPS = get_exp_group(**EXP_KERNEL_CONFIGS)
+EXP_GROUPS = get_exp_group(**EXP_SYN_NON_INTERP_COMPARE_CONFIGS)

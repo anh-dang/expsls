@@ -30,7 +30,7 @@ def Exp_SGD(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     T= max_epoch
     alpha=1
     if alpha_t!="CNST":
-        alpha=(2*kappa/T)**(1./T)
+        alpha=(5*kappa/T)**(1./T)
         # alpha=(1/T)**(1./T)
 
     if is_sls:

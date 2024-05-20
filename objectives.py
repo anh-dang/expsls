@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+from torch import nn
+from torch.nn import functional as F
 import scipy as sc
 from dependencies import *
 
@@ -11,7 +13,7 @@ def make_closure(loss_fn, prior_prec=1e-2):
             prior_prec: precision of the Gaussian prior (pass 0 to avoid regularization)
         Returns: a closure fn for computing the loss and gradient. '''
 
-    def closure(w, X, y, backwards=True):
+    def closure(w, X, y, backwards=True, model=None):
         '''Computes loss and gradient of the loss w.r.t. w
         Parameters:
             w: weight vector
@@ -93,3 +95,57 @@ def accuracy(w, X, y):
     acc = (y_pred == y).mean()
     
     return acc
+
+class LinearNetwork(nn.Module):
+    def __init__(self, input_size, hidden_sizes, output_size, bias=True):
+        super().__init__()
+
+        # iterate averaging:
+        self._prediction_params = None
+
+        self.input_size = input_size
+        if output_size:
+            self.output_size = output_size
+            self.squeeze_output = False
+        else :
+            self.output_size = 1
+            self.squeeze_output = True
+
+        if len(hidden_sizes) == 0:
+            self.hidden_layers = []
+            self.output_layer = nn.Linear(self.input_size, self.output_size, bias=bias)
+        else:
+            self.hidden_layers = nn.ModuleList([nn.Linear(in_size, out_size, bias=bias) for in_size, out_size in zip([self.input_size] + hidden_sizes[:-1], hidden_sizes)])
+            self.output_layer = nn.Linear(hidden_sizes[-1], self.output_size, bias=bias)
+
+    def forward(self, x):
+        '''
+            x: The input patterns/features.
+        '''
+        x = x.view(-1, self.input_size)
+        out = x
+
+        for layer in self.hidden_layers:
+            Z = layer(out)
+            # no activation in linear network.
+            out = Z
+
+        logits = self.output_layer(out)
+        if self.squeeze_output:
+            logits = torch.squeeze(logits)
+
+        return logits
+    
+def get_model(model_name):
+    if model_name == "matrix_fac_1":
+        model = LinearNetwork(6, [1], 10, bias=False)
+
+    elif model_name == "matrix_fac_4":
+        model = LinearNetwork(6, [4], 10, bias=False)
+    
+    elif model_name == "matrix_fac_10":
+        model = LinearNetwork(6, [10], 10, bias=False)
+
+    elif model_name == "linear_fac":
+        model = LinearNetwork(6, [], 10, bias=False)
+    return model
