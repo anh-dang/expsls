@@ -92,18 +92,18 @@ def trainval(exp_dict, savedir_base, reset=False):
 		n, d = exp_dict["n_samples"], exp_dict["d"]
 		false_ratio = exp_dict["false_ratio"]	   
 		margin = exp_dict["margin"]	    
-		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"],n, d, margin,
+		X, y, X_test, y_test, L, mu = data_load(data_dir, exp_dict["dataset"],n, d, margin,
 										 false_ratio, standardize=standardize, remove_strong_convexity=remove_strong_convexity)
 
 	elif exp_dict["dataset"] == "synthetic_ls" or exp_dict["dataset"] == "synthetic_reg":
 		n, d = exp_dict["n_samples"], exp_dict["d"]
-		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
+		X, y, X_test, y_test, L, mu = data_load(data_dir, exp_dict["dataset"], n, d,
 										 standardize=standardize, remove_strong_convexity=remove_strong_convexity)
 		n = X.shape[0]
 	elif exp_dict["dataset"] == "synthetic_kappa":
 		variance = exp_dict["variance"]
 		n, d, kappa= exp_dict["n_samples"], exp_dict["d"], exp_dict["kappa"]
-		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
+		X, y, X_test, y_test, L, mu = data_load(data_dir, exp_dict["dataset"], n, d,
 										 standardize=standardize, remove_strong_convexity=remove_strong_convexity, kappa=kappa, variance=variance)
 		n = X.shape[0]
 		# if "c" in opt_dict.keys():
@@ -111,7 +111,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 	elif exp_dict["dataset"] == "synthetic_test":
 		variance = exp_dict["variance"]
 		n, d, kappa= exp_dict["n_samples"], exp_dict["d"], exp_dict["kappa"]
-		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"], n, d,
+		X, y, X_test, y_test, L, mu = data_load(data_dir, exp_dict["dataset"], n, d,
 										 standardize=standardize, remove_strong_convexity=remove_strong_convexity, kappa=kappa, variance=variance)
 		n = X.shape[0]
 	else:
@@ -125,7 +125,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 		else:
 			d = 0
 		exp_dict["n_samples"] = None
-		X, y, X_test, y_test = data_load(data_dir, exp_dict["dataset"] , n, d, false_ratio,
+		X, y, X_test, y_test, L, mu = data_load(data_dir, exp_dict["dataset"] , n, d, false_ratio,
 										 is_subsample=is_subsample, is_kernelize=is_kernelize, standardize=standardize,
 										 remove_strong_convexity=remove_strong_convexity)
 		n = X.shape[0]
@@ -138,21 +138,24 @@ def trainval(exp_dict, savedir_base, reset=False):
 	if (exp_dict["dataset"],rb,kappa,exp_dict["n_samples"]) in Lparam.keys():
 		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb,kappa,exp_dict["n_samples"])]
 	else:
-		if rb==1:
-			if exp_dict["dataset"]=="rcv1":
-				Lmax,Lmin = 0.03218, 0.01
-			else:
-				Lmax,Lmin=param_l(X,exp_dict["batch_size"])
-		else :
-			# if exp_dict["dataset"]=="rcv1":
-			# 	Lmax,Lmin=0,100000
-			# 	for i in range(80):
-			# 		Lmaxt, Lmint = param_l(X[i*200:(i+1)*200])
-			# 		Lmax,Lmin=max(Lmax,Lmaxt),min(Lmin,Lmint)
-			if exp_dict["dataset"]=="rcv1":
-				Lmax,Lmin = 0.03218, 0.01
+		if L and mu:
+			Lmax,Lmin = L, mu
+		else:
+			if rb==1:
+				if exp_dict["dataset"]=="rcv1":
+					Lmax,Lmin = 0.03218, 0.01
+				else:
+					Lmax,Lmin=param_l(X,exp_dict["batch_size"])
 			else :
-				Lmax, Lmin = param_l(X, X.shape[0])
+				# if exp_dict["dataset"]=="rcv1":
+				# 	Lmax,Lmin=0,100000
+				# 	for i in range(80):
+				# 		Lmaxt, Lmint = param_l(X[i*200:(i+1)*200])
+				# 		Lmax,Lmin=max(Lmax,Lmaxt),min(Lmin,Lmint)
+				if exp_dict["dataset"]=="rcv1":
+					Lmax,Lmin = 0.03218, 0.01
+				else :
+					Lmax, Lmin = param_l(X, X.shape[0])
 				# Lmax, Lmin = param_l(X)
 		# if float(args.mu_misspec) > 1:
 		# 	Lmin = float(args.mu_misspec)*Lmin

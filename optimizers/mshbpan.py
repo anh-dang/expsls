@@ -115,7 +115,7 @@ def M_SHB_PAN(score_list, closure, D, labels, batch_size=1, max_epoch=100,
             temp = x.copy()
             stage = np.searchsorted(stages, t)
             a_k = a(stage, C)
-            b_k = (1 - (1/2)*np.sqrt(mu/(2*L)))**2
+            b_k = (1 - np.sqrt(mu/(2*L)))**2
            # compute the loss, gradients
             loss, gk = closure(x, Di, labels_i)
             x -= a_k * gk - b_k * (x - px)

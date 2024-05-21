@@ -41,7 +41,7 @@ def load_libsvm(name, data_dir):
 def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0, 
               is_subsample=0, is_kernelize=0,
               test_prop=0.2, split_seed=9513451, standardize=False, remove_strong_convexity=False,reuse=True,kappa=None,variance=1e-3):
-    
+    L, mu = None, None
     if (dataset_name not in [ 'synthetic','synthetic_ls','synthetic_reg','synthetic_kappa','synthetic_test']):
 
         # real data
@@ -102,15 +102,15 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
             if os.path.isfile('./synt_kappa_%d_%d_%.2f_%s.pkl'%(n,d,kappa,var)):
                 with open('./synt_kappa_%d_%d_%.2f_%s.pkl'%(n,d,kappa,var), 'rb') as handle:
                     res = pickle.load(handle)
-                    A, y, w_true =res["A"],res["y"],res["w_true"]
+                    A, y, w_true, mu, L = res["A"],res["y"],res["w_true"],res.get('mu'),res.get('L')
             else:
-                A, y, w_true = create_dataset_kap(n, d, kappa,variance)
+                A, y, w_true, mu, L = create_dataset_kap(n, d, kappa,variance)
                 with open('./synt_kappa_%d_%d_%.2f_%s.pkl' % (n, d,kappa,var), 'wb') as handle:
-                    pickle.dump({"A":A,"y":y, "w_true":w_true},handle)
+                    pickle.dump({"A":A,"y":y, "w_true":w_true, "mu":mu, "L":L},handle)
         else:
-            A, y, w_true = create_dataset_kap(n, d, kappa,variance)
+            A, y, w_true, mu, L = create_dataset_kap(n, d, kappa,variance)
             with open('./synt_kappa_%d_%d_%.2f_%s.pkl' % (n, d,kappa,var), 'wb') as handle:
-                pickle.dump({"A": A, "y": y, "w_true": w_true}, handle)
+                pickle.dump({"A":A,"y":y, "w_true":w_true, "mu":mu, "L":L},handle)
 
     if dataset_name == "matrix_fac":
         fname = './' + 'matrix_fac.pkl'
@@ -176,7 +176,7 @@ def data_load(data_dir, dataset_name, n=0, d=0, margin=1e-6, false_ratio=0,
     print('Loaded ', dataset_name, ' dataset.')
     print(A_train.shape)
 
-    return A_train, y_train, A_test, y_test
+    return A_train, y_train, A_test, y_test, L, mu
 
 
 def kernelize(X, X_test, dataset_name, data_dir="./Data", sigma=1.0, kernel_type=0):
@@ -308,7 +308,7 @@ def create_dataset_kap(n,d,kappa,variance=0):
     Y = np.matmul(X, tW) + variance * np.random.normal(size=(n, 1))
     XTY = np.dot(X.T, Y)
     Ws = np.matmul(np.linalg.inv(XTX), XTY)
-    return X,Y.reshape(n,),Ws
+    return X,Y.reshape(n,),Ws,min_ei,max_ei
 
 def generate_synthetic_matrix_factorization_data(xdim=6, ydim=10, nsamples=1000, A_condition_number=1e-10):
 	"""

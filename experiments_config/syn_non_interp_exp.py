@@ -1,12 +1,12 @@
 EXP_SYN_NON_INTERP_CONFIGS={}
 EXP_SYN_NON_INTERP_CONFIGS['max_epoch'] = 7000
-EXP_SYN_NON_INTERP_CONFIGS['kappa'] =  [1024, 512, 200, 100, 50] #[1024, 512, 256] [200, 100, 50]
+EXP_SYN_NON_INTERP_CONFIGS['kappa'] =  [1024, 512] #[1024, 512, 256] [200, 100, 50]
 EXP_SYN_NON_INTERP_CONFIGS['runs'] = [0,1]
-EXP_SYN_NON_INTERP_CONFIGS['batch_size'] = [-10/9]
+EXP_SYN_NON_INTERP_CONFIGS['batch_size'] = [-10/8]
 EXP_SYN_NON_INTERP_CONFIGS['benchmarks_list'] = ["synthetic_kappa"]
 EXP_SYN_NON_INTERP_CONFIGS['losses'] = ["squared_loss"]
 EXP_SYN_NON_INTERP_CONFIGS['is_kernelize'] = 0
-EXP_SYN_NON_INTERP_CONFIGS['variance'] = [1,1e-2,1e-4,1e-6,0] #[1e-2, 1e-4, 1e-5, 1e-6] [1,1e-2,1e-4]
+EXP_SYN_NON_INTERP_CONFIGS['variance'] = [0] #[1e-2, 1e-4, 1e-5, 1e-6] [1,1e-2,1e-4]
 opt_list = []
 
 opt_list += [{'name': 'EXP_SHB',
