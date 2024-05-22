@@ -61,7 +61,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 	seed = 42 + exp_dict['runs']
 	np.random.seed(seed)
 	kappa = None
-
+	variance = None
 	# default values	
 	if "is_subsample" not in exp_dict.keys():
 		is_subsample = 0
@@ -135,8 +135,8 @@ def trainval(exp_dict, savedir_base, reset=False):
 	print('batch_size:', exp_dict["batch_size"])
 
 	rb=int(exp_dict["batch_size"]/n)
-	if (exp_dict["dataset"],rb,kappa,exp_dict["n_samples"]) in Lparam.keys():
-		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb,kappa,exp_dict["n_samples"])]
+	if (exp_dict["dataset"],rb,kappa,exp_dict["n_samples"],variance) in Lparam.keys():
+		Lmax,Lmin=Lparam[(exp_dict["dataset"],rb,kappa,exp_dict["n_samples"],variance)]
 	else:
 		if L and mu:
 			Lmax,Lmin = L, mu
@@ -159,7 +159,7 @@ def trainval(exp_dict, savedir_base, reset=False):
 				# Lmax, Lmin = param_l(X)
 		# if float(args.mu_misspec) > 1:
 		# 	Lmin = float(args.mu_misspec)*Lmin
-		Lparam[(exp_dict["dataset"],rb,kappa,exp_dict["n_samples"])]=(Lmax,Lmin)
+		Lparam[(exp_dict["dataset"],rb,kappa,exp_dict["n_samples"],variance)]=(Lmax,Lmin)
 
 	#set 1/n as reg factor for all exp
 	# exp_dict["regularization_factor"]= 0.01 #1./n

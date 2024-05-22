@@ -57,7 +57,7 @@ def M_SHB_PAN(score_list, closure, D, labels, batch_size=1, max_epoch=100,
     num_grad_evals = 0
     step_size=1./L
     def a(k, C):
-        return 0.5/(( (C)**(k))*L)
+        return 1/(( (C)**(k))*L)
     kappa=L/mu
     if T < 2*kappa:
         raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
@@ -115,7 +115,7 @@ def M_SHB_PAN(score_list, closure, D, labels, batch_size=1, max_epoch=100,
             temp = x.copy()
             stage = np.searchsorted(stages, t)
             a_k = a(stage, C)
-            b_k = (1 - np.sqrt(mu/(2*L)))**2
+            b_k = (1 - np.sqrt(mu/(L)))**2
            # compute the loss, gradients
             loss, gk = closure(x, Di, labels_i)
             x -= a_k * gk - b_k * (x - px)

@@ -8,6 +8,7 @@ from experiments_config.syn_cyclic_exp import *
 from experiments_config.syn_check_alpha_beta import *
 from experiments_config.syn_non_interp_exp import *
 from experiments_config.syn_non_interp_compare import *
+from experiments_config.syn_interp_pan import *
 
 
 def get_benchmark(benchmark,

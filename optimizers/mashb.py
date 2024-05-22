@@ -61,8 +61,9 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
 
     num_grad_evals = 0
     step_size=1./L
+    t=0
     def a(k):
-        return 0.5/((2.0**(k))*L)
+        return 1/((2.0**(k))*L)
     kappa=L/mu
     if T < 2*kappa:
         raise ValueError('T must be greater than 2*kappa,' + str(2*kappa))
@@ -83,6 +84,8 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
     score_dict["train_loss"] = loss
     score_dict["grad_norm"] = np.linalg.norm(full_grad)
     score_dict["train_accuracy"] = accuracy(x, D, labels)
+    score_dict["alpha_k"] = a(t)
+    score_dict["beta_k"] = (1 - np.sqrt(step_size*mu))**2
     if D_test is not None:
         test_loss = closure(x, D_test, labels_test, backwards=False)
         score_dict["test_loss"] = test_loss
@@ -90,7 +93,7 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
     score_list += [score_dict]
 
     T = stages[-1]
-    t=0
+    
     for k in range(max_epoch):
         t_start = time.time()
 
@@ -118,7 +121,7 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
             stage = np.searchsorted(stages, t)
             a_k = a(stage)
             if beta_const:
-                b_k = (1 - (1/2)*np.sqrt(mu/(2*L)))**2
+                b_k = (1 - (1/2)*np.sqrt(mu/(L)))**2
             else:
                 b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
            # compute the loss, gradients
@@ -136,7 +139,7 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
                     output = 'Epoch.: %d, Grad. norm: %.2e' % \
                              (int(t*batch_size/n), np.linalg .norm(full_grad))
                     output += ', Func. value: %e' % loss
-                    output += ', Step size: %e' % step_size
+                    output += ', Step size: %e' % a_k
                     output += ', Num gradient evaluations/n: %f' % (num_grad_evals / log_idx)
                     print(output)
 
@@ -150,6 +153,8 @@ def M_ASHB(score_list, closure, D, labels, batch_size=1, max_epoch=100,
                 score_dict["train_loss"] = loss
                 score_dict["grad_norm"] = np.linalg.norm(full_grad)
                 score_dict["train_accuracy"] = accuracy(x, D, labels)
+                score_dict["alpha_k"] = a_k
+                score_dict["beta_k"] = b_k
                 if D_test is not None:
                     test_loss = closure(x, D_test, labels_test, backwards=False)
                     score_dict["test_loss"] = test_loss

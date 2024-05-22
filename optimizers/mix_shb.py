@@ -73,6 +73,7 @@ def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
     eta_0 = 1./(2*L)
     a_k = eta_0
     b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
+    # b_k = (1 - np.sqrt(a_k*mu))**2
     
     #For stage 2
     # alpha=(3*(L/mu)/T1)**(1./T1)
@@ -126,7 +127,7 @@ def Mix_SHB(score_list, closure, D, labels,  batch_size=1,max_epoch=100, gamma=N
                 b_k = ((1 - lr * mu)/(1 + ldn)) * ld
             else:
                 a_k = eta_0
-                b_k = (1 - (1/2)*np.sqrt(a_k*mu))**2
+                b_k = (1 - np.sqrt(a_k*mu))**2
                 
             temp = x.copy()
             x -= a_k * gk - b_k * (x - x_prev)
