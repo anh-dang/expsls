@@ -6,3 +6,5 @@ env*
 plot*
 synt*
 *.p
+.idea*
+.ipynb_checkpoints*
